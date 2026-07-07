@@ -4,15 +4,19 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active
+## Status: Completed
+
+**Completed**: 2026-07-08
 
 **Goal**: Fix four rough edges in `install.sh` and the image scripts it sets up, found while migrating `sovdev-logger` to the image-based model — silent backup loss, unhelpful `docker pull`/daemon errors, and five scripts that still hardcode the old vendored-toolbox path instead of `$DCT_HOME`.
 
-**GitHub Issue**: #94
+**GitHub Issue**: #94 (closed via merge)
 
 **Priority**: Medium — not a regression blocking anyone today, but issue #4 (hardcoded paths) actively pollutes a consuming project's git working tree when `service-otel` is enabled.
 
-**Last Updated**: 2026-07-07
+**Last Updated**: 2026-07-08
+
+**Merged**: PR #95 (`057e822`), version 1.7.38
 
 ---
 
