@@ -14,7 +14,7 @@ set -e
 
 # Script directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ADDITIONS_DIR="/workspace/.devcontainer/additions"
+ADDITIONS_DIR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions"
 LIB_DIR="$ADDITIONS_DIR/lib"
 
 # Source the component scanner library

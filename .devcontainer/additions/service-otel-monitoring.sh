@@ -75,9 +75,9 @@ source "${SCRIPT_DIR}/lib/service-auto-enable.sh"
 
 # Paths
 OTEL_BINARY="otelcol-contrib"
-CONFIG_FILE_LIFECYCLE="/workspace/.devcontainer/additions/otel/otelcol-lifecycle-config.yaml"
-CONFIG_FILE_METRICS="/workspace/.devcontainer/additions/otel/otelcol-metrics-config.yaml"
-SCRIPT_EXPORTER_CONFIG="/workspace/.devcontainer/additions/otel/script-exporter-config.yaml"
+CONFIG_FILE_LIFECYCLE="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/otel/otelcol-lifecycle-config.yaml"
+CONFIG_FILE_METRICS="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/otel/otelcol-metrics-config.yaml"
+SCRIPT_EXPORTER_CONFIG="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/otel/script-exporter-config.yaml"
 
 LOG_FILE_LIFECYCLE="/var/log/otelcol-lifecycle.log"
 LOG_FILE_METRICS="/var/log/otelcol-metrics.log"

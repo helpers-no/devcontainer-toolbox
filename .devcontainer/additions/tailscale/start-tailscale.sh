@@ -1,7 +1,7 @@
 #!/bin/bash
-# File: .devcontainer/additions/start-tailscale.sh
+# File: additions/tailscale/start-tailscale.sh
 #
-# Usage: sudo .devcontainer/additions/start-tailscale.sh
+# Usage: sudo additions/tailscale/start-tailscale.sh
 # Purpose:
 #   Starts and configures Tailscale in a devcontainer environment with proper
 #   sequencing, status tracking, and comprehensive network verification.
@@ -20,7 +20,7 @@ SERVICE_CATEGORY="INFRA_CONFIG"
 CHECK_RUNNING_COMMAND="pgrep -x tailscaled >/dev/null 2>&1 && tailscale status --json 2>/dev/null | grep -q '\"Online\":true'"
 
 # Supervisord metadata
-SERVICE_COMMAND="sudo /workspace/.devcontainer/additions/start-tailscale.sh"
+SERVICE_COMMAND="sudo ${DCT_HOME:-/opt/devcontainer-toolbox}/additions/tailscale/start-tailscale.sh"
 SERVICE_PRIORITY="10"
 SERVICE_DEPENDS=""
 SERVICE_AUTO_RESTART="true"

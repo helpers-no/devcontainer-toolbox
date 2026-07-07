@@ -1,4 +1,4 @@
-# File: /workspace/.devcontainer/additions/otel/otelcol-metrics-config.yaml
+# File: /opt/devcontainer-toolbox/additions/otel/otelcol-metrics-config.yaml
 #
 # Purpose: Dedicated OpenTelemetry Collector configuration for system metrics collection
 #          Collects CPU, memory, disk, and network metrics every 10 seconds and sends
@@ -40,7 +40,7 @@
 #
 # Usage:
 #   Start: source ~/.devcontainer-identity && \
-#          otelcol-contrib --config=/workspace/.devcontainer/additions/otel/otelcol-metrics-config.yaml
+#          otelcol-contrib --config=/opt/devcontainer-toolbox/additions/otel/otelcol-metrics-config.yaml
 #   Or use: service-otel-monitoring.sh --start
 #
 # Logs: Collector's internal logs go to stdout/stderr (captured by start script)
@@ -86,7 +86,7 @@ receivers:
     # Metrics collected: container.cpu.*, container.memory.*, container.network.io.*, container.blockio.*
 
   # Prometheus receiver: Scrape script_exporter for devcontainer information
-  # script_exporter runs /workspace/.devcontainer/additions/otel/scripts/devcontainer-info.sh
+  # script_exporter runs /opt/devcontainer-toolbox/additions/otel/scripts/devcontainer-info.sh
   # This provides static/semi-static information about installed components
   prometheus/devcontainer_info:
     config:
@@ -101,7 +101,7 @@ receivers:
           metrics_path: '/probe'
 
   # Prometheus receiver: Scrape script_exporter for K8s status
-  # script_exporter runs /workspace/.devcontainer/additions/otel/scripts/rancher-vm-k8s-status.sh
+  # script_exporter runs /opt/devcontainer-toolbox/additions/otel/scripts/rancher-vm-k8s-status.sh
   # Detects K8s status: disabled, enabled_unused (wasting RAM), enabled_active
   prometheus/k8s_status:
     config:

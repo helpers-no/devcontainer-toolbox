@@ -41,7 +41,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 source "${SCRIPT_DIR}/lib/logging.sh"
 
 # Paths
-ADDITIONS_DIR="/workspace/.devcontainer/additions"
+ADDITIONS_DIR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions"
 SUPERVISOR_CONF_D="/etc/supervisor/conf.d"
 TEMP_CONF_DIR="/tmp/supervisor-configs"
 ENABLED_SERVICES_CONF="/workspace/.devcontainer.extend/enabled-services.conf"

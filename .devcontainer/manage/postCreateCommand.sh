@@ -136,8 +136,6 @@ check_missing_configs() {
 
 # Note: Environment setup functions moved to environment-utils.sh library
 # Available functions:
-#   - setup_devcontainer_path()
-#   - setup_command_symlinks()
 #   - setup_git_infrastructure()
 
 #------------------------------------------------------------------------------
@@ -183,12 +181,6 @@ install_project_tools() {
 
 main() {
     echo "🚀 Starting devcontainer post-creation setup..."
-
-    # Setup PATH to include devcontainer commands
-    setup_devcontainer_path
-
-    # Create command symlinks for easy access
-    setup_command_symlinks
 
     # Install welcome message for new terminals
     # Note: Using /etc/bash.bashrc because VS Code terminal is non-login shell
