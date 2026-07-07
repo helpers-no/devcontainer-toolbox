@@ -1,10 +1,10 @@
-# File: /workspace/.devcontainer/additions/otel/script-exporter-config.yaml
+# File: /opt/devcontainer-toolbox/additions/otel/script-exporter-config.yaml
 #
 # Purpose: Configuration for ricoberger/script_exporter
 #          Defines custom scripts that collect metrics and expose them via HTTP
 #          for Prometheus/OTel scraping.
 #
-# Usage: script_exporter --config.files=/workspace/.devcontainer/additions/otel/script-exporter-config.yaml
+# Usage: script_exporter --config.files=/opt/devcontainer-toolbox/additions/otel/script-exporter-config.yaml
 #
 # Each script is executed when the corresponding endpoint is scraped by Prometheus/OTel.
 # Prometheus scrapes at the interval you define, not on a fixed schedule.
@@ -22,7 +22,7 @@ scripts:
   # Executed when: Prometheus/OTel scrapes /probe?script=devcontainer_info
   # Output: Prometheus exposition format
   - name: devcontainer_info
-    command: ["/workspace/.devcontainer/additions/otel/scripts/devcontainer-info.sh"]
+    command: ["/opt/devcontainer-toolbox/additions/otel/scripts/devcontainer-info.sh"]
     timeout:
       max_timeout: 5
 
@@ -31,7 +31,7 @@ scripts:
   # Output: Prometheus exposition format
   # Detects: disabled, enabled_unused, enabled_active
   - name: k8s_status
-    command: ["/workspace/.devcontainer/additions/otel/scripts/rancher-vm-k8s-status.sh"]
+    command: ["/opt/devcontainer-toolbox/additions/otel/scripts/rancher-vm-k8s-status.sh"]
     timeout:
       max_timeout: 10
 

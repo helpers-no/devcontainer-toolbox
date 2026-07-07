@@ -13,7 +13,7 @@
 
 # Paths
 readonly AUTO_ENABLE_TOOLS_CONF="/workspace/.devcontainer.extend/enabled-tools.conf"
-readonly EVENT_NOTIFICATION_SCRIPT="/workspace/.devcontainer/additions/otel/scripts/send-event-notification.sh"
+readonly EVENT_NOTIFICATION_SCRIPT="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/otel/scripts/send-event-notification.sh"
 
 # Colors for logging
 readonly TOOL_AUTO_ENABLE_GREEN='\033[0;32m'

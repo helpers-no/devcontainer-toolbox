@@ -1,5 +1,5 @@
 #!/bin/bash
-# file: .devcontainer/additions/install-srv-otel-monitoring.sh
+# file: additions/install-srv-otel-monitoring.sh
 #
 # Install OpenTelemetry Collector for devcontainer monitoring when connected to our network.
 # For usage information, run: ./install-srv-otel-monitoring.sh --help
@@ -39,7 +39,7 @@ SCRIPT_COMMANDS=(
 # OTel Collector configuration
 OTEL_VERSION="0.140.1"  # Latest stable version as of 2025-11
 OTEL_PACKAGE_NAME="otelcol-contrib"
-OTEL_CONFIG_DIR="/workspace/.devcontainer/additions/otel"
+OTEL_CONFIG_DIR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/otel"
 
 # script_exporter configuration (for custom metrics collection)
 SCRIPT_EXPORTER_VERSION="3.1.0"  # Latest stable version as of 2025-01

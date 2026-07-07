@@ -20,12 +20,26 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
+if ! docker info >/dev/null 2>&1; then
+    echo "Error: Docker is installed but not running."
+    echo ""
+    echo "Please start Docker Desktop (or Rancher Desktop / Colima) and try again."
+    exit 1
+fi
+
 # ─── 2. Backup existing .devcontainer/ ───────────────────────────────────────
+
+if [ -d ".devcontainer.backup" ]; then
+    echo "Error: .devcontainer.backup/ already exists."
+    echo ""
+    echo "Remove or rename it before re-running this script, e.g.:"
+    echo "    mv .devcontainer.backup .devcontainer.backup.old"
+    exit 1
+fi
 
 if [ -d ".devcontainer" ]; then
     echo "Found existing .devcontainer/ directory."
     echo "Creating backup at .devcontainer.backup/..."
-    rm -rf .devcontainer.backup
     mv .devcontainer .devcontainer.backup
     echo "Backup created."
     echo ""
@@ -102,7 +116,16 @@ fi
 echo ""
 echo "Pulling container image: $IMAGE"
 echo "(This may take a few minutes on first install...)"
-docker pull "$IMAGE"
+if ! docker pull "$IMAGE"; then
+    echo ""
+    echo "Error: Failed to pull $IMAGE"
+    echo ""
+    echo "This image is public and does not require a Docker login. If you saw \"denied\","
+    echo "try clearing any stale ghcr.io credentials:"
+    echo "    docker logout ghcr.io"
+    echo "then re-run this script."
+    exit 1
+fi
 
 # ─── 6. Print next steps ─────────────────────────────────────────────────────
 

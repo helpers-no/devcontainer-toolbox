@@ -13,7 +13,7 @@
 
 # Paths
 readonly AUTO_ENABLE_CONF="/workspace/.devcontainer.extend/enabled-services.conf"
-readonly AUTO_ENABLE_GENERATOR="/workspace/.devcontainer/additions/config-supervisor.sh"
+readonly AUTO_ENABLE_GENERATOR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/config-supervisor.sh"
 
 # Colors for logging
 readonly AUTO_ENABLE_GREEN='\033[0;32m'

@@ -5,7 +5,7 @@
 
 # Determine script directory to find library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="/workspace/.devcontainer/additions/lib"
+LIB_DIR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions/lib"
 
 # Source the component scanner library
 if [[ -f "$LIB_DIR/component-scanner.sh" ]]; then
@@ -15,7 +15,7 @@ else
     exit 1
 fi
 
-ADDITIONS_DIR="/workspace/.devcontainer/additions"
+ADDITIONS_DIR="${DCT_HOME:-/opt/devcontainer-toolbox}/additions"
 
 echo "# HELP devcontainer_component_installed Whether a devcontainer component is installed (1=installed, 0=not installed)"
 echo "# TYPE devcontainer_component_installed gauge"
