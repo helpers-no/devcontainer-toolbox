@@ -30,11 +30,20 @@ When user requests a new feature or fix:
 4. When user approves, ask: "Do you want to work on a feature branch? (recommended)"
 5. Only move to `active/` after user approves
 
-## Git Commits
+## Git Workflow (MANDATORY)
 
-- Ask for confirmation before running git commands (add, commit, push)
-- Use feature branches for multi-phase work
-- Commit after each phase (with user approval)
+**Never commit directly to `main`.** Every change — including small docs fixes — goes through this full flow:
+
+1. **Branch**: Create a feature branch off `main` (e.g. `docs/short-name`, `feature/short-name`, `fix/short-name`)
+2. **Commit**: Commit the change(s) on that branch — ask for confirmation before each `git commit`
+3. **Push**: `git push -u origin <branch>` — ask for confirmation first
+4. **PR**: Open a pull request with `gh pr create`
+5. **Merge**: Merge the PR (`gh pr merge --merge --delete-branch`) — ask for confirmation first
+6. **Pull**: Switch to `main` and `git pull origin main`
+7. **Clean up**: Remove the local feature branch (`git branch -d <branch>`) — the remote branch is already gone via `--delete-branch`
+
+- For multi-phase plans, commit after each phase (with user approval) on the same feature branch; only run the PR/merge/cleanup steps once the whole plan is complete
+- Ask for confirmation before any git command that changes shared state (commit, push, merge) — branch creation and read-only commands (status, diff, log) don't need it
 
 ## Version Management (MANDATORY)
 
