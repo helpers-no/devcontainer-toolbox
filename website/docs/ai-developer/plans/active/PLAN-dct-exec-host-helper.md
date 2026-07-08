@@ -55,24 +55,24 @@ User confirms the installation approach before Phase 2 starts.
 
 ---
 
-## Phase 2: `dct-find-container` — resolve the container name
+## Phase 2: `dct-find-container` — resolve the container name — ✅ DONE (2.5 unverified)
 
 ### Tasks
 
-- [ ] 2.1 Create `host-tools/dct-find-container.sh`:
-  - Resolve root: `git rev-parse --show-toplevel 2>/dev/null || pwd`
-  - Filter running containers: `docker ps --filter "label=devcontainer.local_folder=$ROOT" --format '{{.Names}}'`
-  - No match → print a clear, actionable error to stderr (not a raw empty result) and exit 1: e.g. "No running devcontainer found for `$ROOT`. Is it open in VS Code / started?"
-  - Multiple matches → print all names, exit 1 with a message explaining ambiguity (shouldn't normally happen for one repo path, but don't silently pick one)
-  - Single match → print the container name to stdout, exit 0
-- [ ] 2.2 Add `--help` output
-- [ ] 2.3 Manual test: run from inside this repo while its own devcontainer is running — confirm it resolves the right container
-- [ ] 2.4 Manual test: run from a directory with no devcontainer running — confirm the clear error
-- [ ] 2.5 Manual test: two worktrees of the same repo, each with its own devcontainer running — confirm each worktree resolves to its own container (labels differ by path)
+- [x] 2.1 Created `host-tools/dct-find-container.sh`:
+  - Resolves root via `git rev-parse --show-toplevel 2>/dev/null || pwd`
+  - Filters running containers: `docker ps --filter "label=devcontainer.local_folder=$ROOT" --format '{{.Names}}'`
+  - No match → checks `docker ps -a` too, so a *stopped* match gets a distinct "found but not running" message instead of a generic "not found"; exits 1
+  - Multiple matches → prints all names, exits 1, does not silently pick one
+  - Single match → prints the container name to stdout, exits 0
+- [x] 2.2 Added `--help` output
+- [x] 2.3 Manual test: ran against the real running `sovdev-logger` devcontainer (container `relaxed_nightingale`) from that repo's root — resolved correctly
+- [x] 2.4 Manual test: ran from this repo (devcontainer-toolbox), which has no devcontainer currently running — got the clear "no devcontainer found" error, exit 1
+- [ ] 2.5 Manual test: two worktrees of the same repo, each with its own devcontainer running — **not tested**, no second worktree available in this session. Logic should hold since labels differ by filesystem path, but unverified.
 
 ### Validation
 
-`dct-find-container` prints exactly one container name (or a clear error) in all cases above.
+`dct-find-container` prints exactly one container name (or a clear error) in the cases tested above. Multi-worktree case (2.5) still needs verification.
 
 ---
 
