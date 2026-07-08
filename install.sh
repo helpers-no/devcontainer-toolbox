@@ -127,7 +127,49 @@ if ! docker pull "$IMAGE"; then
     exit 1
 fi
 
-# ─── 6. Print next steps ─────────────────────────────────────────────────────
+# ─── 6. Install dct-exec / dct-find-container host helpers ──────────────────
+# These run on the HOST (not inside the devcontainer) and let host-side
+# scripts find/exec into this project's own devcontainer without hardcoding
+# a container name. macOS/Linux only (bash required) — skipped on Windows.
+
+BIN_DIR="$HOME/.local/bin"
+
+if [ "$(uname -s 2>/dev/null)" = "Linux" ] || [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
+    mkdir -p "$BIN_DIR"
+    echo ""
+    echo "Installing dct-exec and dct-find-container to $BIN_DIR..."
+
+    for name in dct-exec dct-find-container; do
+        url="https://raw.githubusercontent.com/$REPO/main/host-tools/$name.sh"
+        dest="$BIN_DIR/$name"
+        if command -v curl >/dev/null 2>&1; then
+            ok=1; curl -fsSL "$url" -o "$dest" || ok=0
+        elif command -v wget >/dev/null 2>&1; then
+            ok=1; wget -qO "$dest" "$url" || ok=0
+        else
+            ok=0
+        fi
+        if [ "$ok" = "1" ] && [ -s "$dest" ]; then
+            chmod +x "$dest"
+            echo "  Installed $dest"
+        else
+            echo "  Warning: Failed to install $name (skipping — this doesn't affect the devcontainer itself)"
+            rm -f "$dest"
+        fi
+    done
+
+    case ":$PATH:" in
+        *":$BIN_DIR:"*) ;;
+        *)
+            echo ""
+            echo "Note: $BIN_DIR is not on your PATH."
+            echo "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) to use dct-exec:"
+            echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
+            ;;
+    esac
+fi
+
+# ─── 7. Print next steps ─────────────────────────────────────────────────────
 
 echo ""
 echo "✅ devcontainer-toolbox installed!"

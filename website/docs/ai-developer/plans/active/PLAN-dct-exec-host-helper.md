@@ -98,18 +98,20 @@ Non-TTY and stdin-pipe modes verified against a real running devcontainer. Inter
 
 ---
 
-## Phase 4: Wire into `install.sh` (macOS/Linux only)
+## Phase 4: Wire into `install.sh` (macOS/Linux only) — ✅ DONE (4.3 partially verified)
 
 ### Tasks
 
-- [ ] 4.1 Update `install.sh` to copy `host-tools/dct-exec.sh` and `host-tools/dct-find-container.sh` into the target dir from Phase 1, `chmod +x`, and print the install location
-- [ ] 4.2 If the install dir isn't on `PATH`, print a one-line instruction to add it (don't silently fail)
-- [ ] 4.3 Re-run `install.sh` on a machine that already has `dct-exec` installed — confirm it updates cleanly
-- [ ] 4.4 `install.ps1` is untouched by this plan — Windows users simply won't get `dct-exec` until the follow-up plan ships
+- [x] 4.1 Updated `install.sh`: new step 6 downloads `host-tools/dct-exec.sh` and `host-tools/dct-find-container.sh` from `raw.githubusercontent.com/$REPO/main/...` into `~/.local/bin/{dct-exec,dct-find-container}` (no `.sh` suffix), `chmod +x`, prints install location. Gated on `uname -s` being `Linux` or `Darwin` (skipped on Windows). A failed download is a **warning, not a hard error** — it removes the partial file and continues, since the core devcontainer install already succeeded by this point and shouldn't be blocked by an optional host helper failing to fetch.
+- [x] 4.2 If `$HOME/.local/bin` isn't on `PATH`, prints a one-line `export PATH=...` instruction
+- [x] 4.3 Re-run behavior: overwrites existing files unconditionally (`curl -o`/`wget -O` always overwrite) — logic verified in isolation (see below), but not run via a real second `curl | bash` invocation of the full installer
+- [x] 4.4 `install.ps1` is untouched by this plan — Windows users simply won't get `dct-exec` until the follow-up plan ships
+
+**Testing note:** did not run `install.sh` end-to-end in this session — it backs up/replaces `.devcontainer/` and pulls the Docker image, too invasive to exercise just to test one step. Instead, extracted the new download/chmod loop into an isolated test script using `file://` URLs pointing at the local `host-tools/` files (standing in for `raw.githubusercontent.com`, which won't resolve for this branch until merged to `main`). Confirmed: both files download, get `chmod +x`, and the installed `dct-exec` (no `.sh` suffix) correctly finds its sibling `dct-find-container` and runs a real command in the `sovdev-logger` devcontainer successfully.
 
 ### Validation
 
-Fresh `curl -fsSL .../install.sh | bash` leaves `dct-exec` and `dct-find-container` runnable from a new shell.
+Download/install/chmod logic verified in isolation against real files. The literal `curl -fsSL .../install.sh | bash` end-to-end flow (fresh machine, real GitHub URLs, full script including Docker pull) has **not** been run — needs verification after merge, since the `raw.githubusercontent.com/.../main/...` URLs only resolve once `host-tools/*.sh` exist on `main`.
 
 ---
 
