@@ -10,7 +10,9 @@
 
 **Priority**: High — 1.8 unblocks TMP's README rewrites; 1.9 fixes the deploy-time crash-loop bug.
 
-**Last Updated**: 2026-04-09
+**Last Updated**: 2026-07-08
+
+**Note**: Phases 1 and 2 code shipped in commits `41fa00a` (feat: uis shim + dev-template-configure passes namespace + secret-name-prefix) and `b33988a` (feat: dev-template configure verbose output + v1.7.36), released in v1.7.36+. This doc was stale — it hadn't been updated since 2026-04-09 despite the work landing. Task 1.5 (four-input-mode test) and Phase 3 (end-to-end verification with TMP's rewritten templates) have no recorded confirmation, so their checkboxes remain unchecked below.
 
 **Investigation**: `helpers-no/dev-templates` → `INVESTIGATE-improve-template-docs-with-services.md` (active)
 
@@ -32,7 +34,7 @@ This plan ships the DCT half of the fix.
 
 ---
 
-## Phase 1: The `uis` shim (1.8) — IN PROGRESS
+## Phase 1: The `uis` shim (1.8) — ✅ CODE DONE (1.5 unverified)
 
 ### Tasks
 
@@ -107,9 +109,9 @@ This plan ships the DCT half of the fix.
 
 ---
 
-## Phase 2: `dev-template-configure` passes namespace + secret name prefix (1.9) — IN PROGRESS
+## Phase 2: `dev-template-configure` passes namespace + secret name prefix (1.9) — ✅ DONE
 
-UIS 1.10 shipped 2026-04-09 (PR #121, all 6 tester verification steps PASS).
+UIS 1.10 shipped 2026-04-09 (PR #121, all 6 tester verification steps PASS). Confirmed present in code (`dev-template-configure.sh` lines ~361-382) as of 2026-07-08.
 
 ### Tasks
 
@@ -155,15 +157,17 @@ End-to-end happy path works with zero `docker exec` mentions in the README.
 
 ## Acceptance Criteria
 
-- [ ] `/usr/local/bin/uis` exists and works as a transparent shim to UIS CLI
-- [ ] `uis_bridge_run_tty()` function added to `lib/uis-bridge.sh`
+Items below marked `(code confirmed 2026-07-08)` were verified by reading the shipped source; they are not runtime-tested. Items with no annotation still need a live check.
+
+- [x] `/usr/local/bin/uis` symlink exists in `image/Dockerfile`, pointing at `.devcontainer/manage/uis.sh` (code confirmed 2026-07-08)
+- [x] `uis_bridge_run_tty()` function added to `lib/uis-bridge.sh` (code confirmed 2026-07-08)
 - [ ] `uis help` / `uis --help` / `uis -h` / `uis` (no args) work without UIS container running
 - [ ] All other `uis ...` commands fail clearly when container is down, work when up
 - [ ] Stdin pipe (`uis configure ... --init-file -`) routes via `docker exec -i` without TTY
 - [ ] Interactive TTY (`uis connect postgresql mydb`) routes via `docker exec -it`
-- [ ] `dev-template-configure` passes `--namespace` and `--secret-name-prefix` to UIS
-- [ ] `uis-bridge.sh` reads new JSON fields (`secret_name`, `secret_namespace`, `env_var`)
-- [ ] `dev-template-configure` completion message mentions both local and cluster secret
+- [x] `dev-template-configure` passes `--namespace` and `--secret-name-prefix` to UIS (code confirmed 2026-07-08, `dev-template-configure.sh` ~L361-382)
+- [x] `uis-bridge.sh` reads new JSON fields (`secret_name`, `secret_namespace`, `env_var`) (code confirmed 2026-07-08)
+- [x] `dev-template-configure` completion message mentions both local and cluster secret (code confirmed 2026-07-08)
 - [ ] Re-run of `dev-template-configure` is idempotent (UIS returns `already_configured`)
 - [ ] CI passes (static + unit + image build)
 - [ ] Tested in fresh devcontainer with TMP's rewritten templates
