@@ -82,6 +82,17 @@ cat .devcontainer.extend/enabled-tools.conf
 
 Add the tool ID if missing.
 
+### Host-side script says "devcontainer not running" but it is
+
+**Symptom:** A host-side script that does `docker exec devcontainer-toolbox ...` (or similar hardcoded name) fails, even though the devcontainer is clearly running.
+
+**Cause:** Devcontainers now get a random Docker-assigned name instead of a fixed one, so multiple projects (or worktrees) can each run their own devcontainer at once. Any script still hardcoding the old fixed name will break.
+
+**Solution:** Use `dct-exec` instead of hardcoding a container name — see [Running Commands From the Host](getting-started#running-commands-from-the-host-dct-exec):
+```bash
+dct-exec <command>
+```
+
 ---
 
 ## Service Issues
