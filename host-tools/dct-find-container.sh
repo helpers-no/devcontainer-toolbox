@@ -60,7 +60,9 @@ fi
 MATCH_COUNT="$(echo "$MATCHES" | wc -l | tr -d ' ')"
 if [ "$MATCH_COUNT" -gt 1 ]; then
     echo "Error: multiple running devcontainers matched $ROOT:" >&2
-    echo "$MATCHES" | sed 's/^/  /' >&2
+    while IFS= read -r name; do
+        echo "  $name" >&2
+    done <<< "$MATCHES"
     exit 1
 fi
 

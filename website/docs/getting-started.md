@@ -88,6 +88,39 @@ The new approach uses a pre-built image so your `.devcontainer/` folder contains
 
 ---
 
+## Running Commands From the Host: `dct-exec`
+
+Each project's devcontainer gets a random Docker container name, not a fixed one — this is what lets you run multiple projects' devcontainers (or multiple worktrees of the same project) at the same time. That means host-side scripts can't hardcode a container name to `docker exec` into.
+
+Step 1's installer also installs two small helpers to `~/.local/bin` (macOS/Linux only):
+
+- `dct-find-container` — prints the name of the running devcontainer for the current repo
+- `dct-exec <command> [args]` — runs `<command>` inside it
+
+```bash
+dct-exec bash                          # open a shell inside this project's devcontainer
+dct-exec npm test                      # run a command, output prints to your terminal
+echo "SELECT 1;" | dct-exec psql mydb  # pipe stdin in
+```
+
+Both resolve the container via the `devcontainer.local_folder` label that VS Code's Dev Containers extension sets automatically on every devcontainer it creates:
+
+```bash
+docker ps --filter "label=devcontainer.local_folder=$(git rev-parse --show-toplevel)" --format '{{.Names}}'
+```
+
+If you're writing your own host-side script (for this project or another one), use that label lookup directly instead of hardcoding a container name.
+
+:::note
+`dct-exec` needs `~/.local/bin` on your `PATH`. If the installer warned you it wasn't, add this to your shell profile: `export PATH="$HOME/.local/bin:$PATH"`
+:::
+
+:::note Windows
+`dct-exec` is macOS/Linux only for now — it's a bash script and there's no `.ps1` equivalent yet.
+:::
+
+---
+
 ## What's Next?
 
 - **[Install Tools](commands)** - Add development tools (Python, TypeScript, Go, etc.)

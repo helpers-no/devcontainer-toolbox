@@ -115,31 +115,33 @@ Download/install/chmod logic verified in isolation against real files. The liter
 
 ---
 
-## Phase 5: Documentation
+## Phase 5: Documentation — ✅ DONE (5.3 pending user decision)
 
 ### Tasks
 
-- [ ] 5.1 Document `dct-exec` / `dct-find-container` in `website/docs/getting-started/` or wherever host-side tooling is currently documented (find the right home — check if one exists first)
-- [ ] 5.2 Document the underlying `devcontainer.local_folder` label pattern directly, for maintainers who want to write their own host-side scripts instead of using `dct-exec`
-- [ ] 5.3 Note the fix for `helpers-no/sovdev-logger` (or file a follow-up issue there) — that repo's three scripts should switch from hardcoded `CONTAINER_NAME` to `dct-find-container`/`dct-exec` once this ships
-- [ ] 5.4 Run `cd website && npm run build` locally to catch broken links before pushing (per WORKFLOW.md's mandatory docs build check)
+- [x] 5.1 Documented in `website/docs/getting-started.md` — no existing home for host-side tooling docs existed, added a new "Running Commands From the Host: `dct-exec`" section after the migration guide
+- [x] 5.2 Same section documents the raw `devcontainer.local_folder` label lookup directly, for maintainers who'd rather write their own script
+- [ ] 5.3 Follow-up issue in `helpers-no/sovdev-logger` — **not filed yet**, needs user confirmation before opening an issue in another repo. Also added a `troubleshooting.md` entry ("Host-side script says 'devcontainer not running' but it is") covering the same regression generically.
+- [x] 5.4 Ran `cd website && npm run build` — succeeded, no broken links introduced (one pre-existing unrelated "duplicate routes" warning for `/docs/ai-developer/`)
 
 ### Validation
 
-A maintainer unfamiliar with this issue can find and use `dct-exec` from the docs alone.
+A maintainer unfamiliar with this issue can find and use `dct-exec` from the docs alone (getting-started.md + troubleshooting.md).
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `dct-find-container` resolves the correct running container for the current repo (and correctly for distinct worktrees)
-- [ ] `dct-find-container` fails with a clear, actionable message when no container is running
-- [ ] `dct-exec <command>` runs `<command>` inside the resolved container, with correct TTY/stdin/non-TTY routing
-- [ ] `install.sh` installs both scripts onto the host `PATH` (or clearly instructs the user how to add the install dir to `PATH`)
-- [ ] Re-running `install.sh` updates existing installs without duplication or leftover stale copies
-- [ ] Scripts pass `shellcheck`
-- [ ] Documented somewhere a project maintainer would find it, including that v1 is macOS/Linux only
-- [ ] `install.ps1` is unmodified; no Windows artifacts shipped as part of this plan
+Items marked `(verified 2026-07-08)` were confirmed against a real running devcontainer in this session; unmarked items still need a check with a real terminal / real GitHub URLs.
+
+- [x] `dct-find-container` resolves the correct running container for the current repo (verified 2026-07-08, against `sovdev-logger`'s devcontainer) — distinct-worktree case still unverified, no second worktree available
+- [x] `dct-find-container` fails with a clear, actionable message when no container is running (verified 2026-07-08)
+- [x] `dct-exec <command>` runs `<command>` inside the resolved container for stdin-pipe and non-TTY modes (verified 2026-07-08) — interactive TTY mode unverified (no real TTY in this session; logic mirrors `uis.sh`'s proven `-it` branch)
+- [x] `install.sh` installs both scripts onto the host `PATH`, warns if not on `PATH` — download/chmod logic verified in isolation (verified 2026-07-08); full `curl | bash` run not exercised (needs `host-tools/*.sh` to exist on `main` first)
+- [x] Re-running `install.sh` overwrites existing installs (by construction — `curl -o`/`wget -O` always overwrite) — not exercised via a real second full install run
+- [x] Scripts pass `shellcheck` (verified 2026-07-08 via `docker run koalaman/shellcheck:stable`, since shellcheck isn't installed on this host) — fixed one SC2001 style finding in `dct-find-container.sh` (replaced a `sed` one-liner with a `while read` loop), both scripts now clean
+- [x] Documented in `getting-started.md` (usage + label pattern) and `troubleshooting.md` (regression symptom), both note v1 is macOS/Linux only
+- [x] `install.ps1` is unmodified; no Windows artifacts shipped as part of this plan (confirmed via `git diff`)
 
 ---
 
