@@ -27,7 +27,7 @@
     "remoteEnv": {
         "DCT_HOME": "/opt/devcontainer-toolbox",
         "DCT_WORKSPACE": "/workspace",
-        "DCT_IMAGE_VERSION": "1.7.38",
+        "DCT_IMAGE_VERSION": "1.8.0",
         "DEV_HOST_USER": "${localEnv:USER}",
         "DEV_HOST_USERNAME": "${localEnv:USERNAME}",
         "DEV_HOST_OS": "${localEnv:OS}",
