@@ -76,25 +76,25 @@ User confirms the installation approach before Phase 2 starts.
 
 ---
 
-## Phase 3: `dct-exec` — exec into the resolved container
+## Phase 3: `dct-exec` — exec into the resolved container — ✅ DONE (3.2 unverified)
 
-Mirror the TTY/stdin/non-TTY routing already solved in `.devcontainer/manage/uis.sh` (same problem, opposite direction) rather than re-deriving it.
+Mirrors the TTY/stdin/non-TTY routing already solved in `.devcontainer/manage/uis.sh` (same problem, opposite direction) rather than re-deriving it.
 
 ### Tasks
 
-- [ ] 3.1 Create `host-tools/dct-exec.sh`:
-  - Resolve container via `dct-find-container` (source it or shell out — pick one, document why)
+- [x] 3.1 Created `host-tools/dct-exec.sh`:
+  - Resolves container by shelling out to `dct-find-container` (prefers installed sibling without `.sh`, falls back to `.sh` for running straight from the repo, then `PATH`) — shelling out chosen over sourcing so `dct-find-container` stays independently usable/documented as its own tool (per the issue's "and/or a lighter dct-find-container" suggestion)
   - Interactive TTY (`-t 0` and `-t 1`): `docker exec -it <container> "$@"`
   - Piped stdin (`! -t 0`): `docker exec -i <container> "$@"`
   - Neither: `docker exec <container> "$@"`
   - No-args / `--help`: usage message, doesn't require a running container
-- [ ] 3.2 Manual test: `dct-exec bash` gives an interactive shell
-  - [ ] 3.3 Manual test: `echo hi | dct-exec cat` works without TTY garbling
-- [ ] 3.4 Manual test: `dct-exec ls /workspace > out.txt` redirects cleanly
+- [ ] 3.2 Manual test: `dct-exec bash` gives an interactive shell — **not verified**: the tool environment used for this implementation session has no real TTY (`[ -t 0 ]`/`[ -t 1 ]` both false), so the `-it` branch can't be exercised here. The condition and `docker exec` flags are identical to `uis.sh`'s already-proven `-it` branch; needs a real terminal to confirm end-to-end.
+- [x] 3.3 Manual test: `echo hi | dct-exec cat` — ran against the real `sovdev-logger` devcontainer, printed `hello from host` cleanly, exit 0
+- [x] 3.4 Manual test: `dct-exec ls /workspace > out.txt` — ran against the real container, redirected cleanly (listed repo contents), exit 0
 
 ### Validation
 
-All three invocation modes work identically to how `uis.sh` behaves for the inside→out case.
+Non-TTY and stdin-pipe modes verified against a real running devcontainer. Interactive TTY mode (3.2) still needs a real terminal to confirm.
 
 ---
 
