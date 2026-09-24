@@ -152,6 +152,7 @@ Follow the same patterns as `dev-template.sh` v1.6.0. Key differences noted belo
 8. Validate: check `template/` subdirectory exists in selected template
 9. Copy `template/` contents to `$CALLER_DIR/` preserving directory structure, with these rules:
     - **Always overwrite** the 6 portable docs (README.md, WORKFLOW.md, PLANS.md, DEVCONTAINER.md, GIT.md, TALK.md) and `project-TEMPLATE.md` — these are template-owned
+      - **Note (2026-09-24):** `TALK.md` is retired. It described a file-based agent bus that the fleet replaced with GitHub issues, and `helpers-no/dev-templates` no longer ships it. Do not reintroduce it. The rest of this rule is unchanged history.
     - **Never overwrite** user-renamed `project-*.md` files (anything other than `project-TEMPLATE.md`)
     - **Never overwrite** anything in `plans/` (backlog/, active/, completed/) — user's work
     - **Create** `plans/` directories with `.gitkeep` only if they don't exist

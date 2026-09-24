@@ -95,6 +95,7 @@ User can browse templates, see details, and confirm selection.
 
 - [x] 4.1 Add `copy_template_files()` — copy `template/` contents to `$CALLER_DIR/` preserving directory structure, with rules:
   - Always overwrite template-owned docs: `README.md`, `WORKFLOW.md`, `PLANS.md`, `DEVCONTAINER.md`, `GIT.md`, `TALK.md`, `project-TEMPLATE.md`
+    - **Note (2026-09-24):** `TALK.md` is retired. It described a file-based agent bus that the fleet replaced with GitHub issues, and `helpers-no/dev-templates` no longer ships it. Do not reintroduce it.
   - Never overwrite user-renamed `project-*.md` files (anything other than `project-TEMPLATE.md`)
   - Never overwrite anything in `plans/` subdirectories (backlog/, active/, completed/) — user's work
   - Create `plans/` directories with `.gitkeep` only if they don't exist

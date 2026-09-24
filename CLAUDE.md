@@ -2,6 +2,14 @@
 
 Project-specific instructions for Claude Code when working on devcontainer-toolbox.
 
+## Start Here
+
+1. `website/docs/ai-developer/project-devcontainer-toolbox.md` — the authoritative description of this repo and its non-negotiable contracts. Read it first.
+2. `website/docs/ai-developer/README.md` — how the AI-developer system works and the full reading order.
+3. `website/docs/ai-developer/plans/backlog/1PRIORITY.md` — what to do next. Keep it true on a change.
+
+**Fleet coordination is not in this repo.** The protocol lives in `terchris/urb-agents` (`protocol/communication.md`), read remotely: do not clone urb-agents and do not copy `protocol/` here. The inbox is a query: `~/.local/bin/urb inbox --id devcontainer-toolbox`. See `website/docs/ai-developer/COORDINATION.md`. There is no file bus (`talk/`, `TALK.md`, `mailboxes/` are retired).
+
 ## Plan Workflow
 
 **BEFORE implementing any plan, read these files for context:**
