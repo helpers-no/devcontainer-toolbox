@@ -12,18 +12,30 @@ echo ""
 
 # ─── 1. Check Docker is available ────────────────────────────────────────────
 
+# Checked before anything is written, so a machine that is not ready is left untouched.
+
 if ! command -v docker &> /dev/null; then
-    echo "Error: Docker is not installed or not in PATH."
-    echo ""
-    echo "Install Docker Desktop from: https://www.docker.com/products/docker-desktop"
-    echo "Then run this script again."
+    if [ -d "/Applications/Rancher Desktop.app" ] || [ -d "$HOME/Applications/Rancher Desktop.app" ]; then
+        echo "Rancher Desktop is installed, but this terminal cannot see it yet."
+        echo ""
+        echo "Start Rancher Desktop, wait until it says it is ready, then open a new terminal"
+        echo "window and run the same command again."
+    else
+        echo "Rancher Desktop is not installed. DevContainer Toolbox needs it."
+        echo ""
+        echo "On a work Mac: install Rancher Desktop from Self Service, or ask your IT department."
+        echo "On your own computer: download it from https://rancherdesktop.io/"
+        echo "Then run this command again."
+    fi
     exit 1
 fi
 
 if ! docker info >/dev/null 2>&1; then
-    echo "Error: Docker is installed but not running."
+    echo "Rancher Desktop is not running."
     echo ""
-    echo "Please start Docker Desktop (or Rancher Desktop / Colima) and try again."
+    echo "1. Start Rancher Desktop."
+    echo "2. Wait until it says it is ready. The first start can take a few minutes."
+    echo "3. Then run this command again."
     exit 1
 fi
 

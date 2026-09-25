@@ -2,6 +2,12 @@
 # Run with: irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
 # If blocked: powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex"
 
+# Everything runs inside a script block. With `irm | iex` this script runs in the user's own
+# PowerShell session, so `exit` would close their window before they could read the message, and
+# preference changes would leak into their session. Inside the block, `return` stops the script
+# and leaves the window open.
+& {
+
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
@@ -14,12 +20,41 @@ Write-Host ""
 
 # --- 1. Check Docker is available ------------------------------------------------
 
+# Checked before anything is written, so a PC that is not ready is left untouched.
+
+$rancherExe = @(
+    "$env:LOCALAPPDATA\Programs\Rancher Desktop\Rancher Desktop.exe",
+    "$env:ProgramFiles\Rancher Desktop\Rancher Desktop.exe"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Error: Docker is not installed or not in PATH." -ForegroundColor Red
+    if ($rancherExe) {
+        Write-Host "Rancher Desktop is installed, but this PowerShell window cannot see it yet." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Close this window, open a new PowerShell window, and run the same command again."
+    } else {
+        Write-Host "Rancher Desktop is not installed on this PC. DevContainer Toolbox needs it." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "On a work PC: install Rancher Desktop from Company Portal, or ask your IT department."
+        Write-Host "On your own PC: download it from https://rancherdesktop.io/"
+        Write-Host "Then run this command again."
+    }
+    return
+}
+
+$prevPref = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+docker info *> $null
+$dockerRunning = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = $prevPref
+
+if (-not $dockerRunning) {
+    Write-Host "Rancher Desktop is not running." -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Install Rancher Desktop from: https://rancherdesktop.io/"
-    Write-Host "Then run this script again."
-    exit 1
+    Write-Host "1. Start Rancher Desktop from the Start menu."
+    Write-Host "2. Wait until it says it is ready. The first start can take a few minutes."
+    Write-Host "3. Then run this command again."
+    return
 }
 
 # --- 2. Backup existing .devcontainer/ -------------------------------------------
@@ -51,14 +86,14 @@ catch {
     Write-Host "Error: Failed to download devcontainer-user-template.json" -ForegroundColor Red
     Write-Host "URL: $templateUrl"
     Write-Host "$_"
-    exit 1
+    return
 }
 
 $fileSize = (Get-Item ".devcontainer/devcontainer.json").Length
 if ($fileSize -eq 0) {
     Write-Host "Error: Downloaded file is empty" -ForegroundColor Red
     Remove-Item ".devcontainer/devcontainer.json" -Force -ErrorAction SilentlyContinue
-    exit 1
+    return
 }
 
 Write-Host "Created .devcontainer/devcontainer.json ($fileSize bytes)"
@@ -135,7 +170,20 @@ if (-not $codeCmd) {
 Write-Host ""
 Write-Host "Pulling container image: $image"
 Write-Host "(This may take a few minutes on first install...)"
+$prevPref = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 docker pull $image
+$pullOk = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = $prevPref
+
+if (-not $pullOk) {
+    Write-Host ""
+    Write-Host "The DevContainer Toolbox image could not be downloaded." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Check that this PC is connected to the internet and that Rancher Desktop is still running,"
+    Write-Host "then run this command again."
+    return
+}
 
 # --- 6. Print next steps ----------------------------------------------------------
 
@@ -152,4 +200,6 @@ Write-Host ""
 if (Test-Path ".devcontainer.backup") {
     Write-Host "Note: Your previous .devcontainer/ was backed up to .devcontainer.backup/"
     Write-Host ""
+}
+
 }
