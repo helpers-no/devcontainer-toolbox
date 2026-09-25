@@ -1,8 +1,9 @@
 # Host-side commands in the user template must work on every host OS.
 #
 # initializeCommand runs on the HOST, before the container exists: with /bin/sh on Mac/Linux and
-# with cmd.exe on Windows. A bash-only command broke every new Windows install from 2026-04-07
-# (733dd73) until this check existed. See website/docs/ai-developer/plans/active/PLAN-fix-windows-quickstart.md.
+# with cmd.exe on Windows. A bash-only command broke new Windows installs from 2026-04-07 (733dd73)
+# on every PC without Unix tools on PATH, which is the normal case. The test script removes the
+# runner's Git-for-Windows Unix tools from PATH, because with them the old command "passes". See website/docs/ai-developer/plans/active/PLAN-fix-windows-quickstart.md.
 
 name: Host Commands
 

@@ -18,6 +18,20 @@ $ErrorActionPreference = 'Stop'
 $ranMarker    = 'Running the initializeCommand from devcontainer.json'
 $failedMarker = 'The initializeCommand in the devcontainer.json failed'
 
+# GitHub's Windows runners put Git for Windows' Unix tools (C:\Program Files\Git\usr\bin, with
+# true.exe, sh.exe, ...) on PATH. An ordinary office PC does not: Git's default install does not
+# add them, and most users have no Git at all. With them on PATH the old bash-only command ends in
+# a real `true` and "succeeds", so the check proves nothing. Remove them so cmd.exe sees what a
+# normal PC sees, and verify it.
+$env:Path = (($env:Path -split ';') | Where-Object {
+    $_ -and ($_ -notmatch '\\Git\\(usr\\)?bin\\?$') -and ($_ -notmatch '\\Git\\mingw64\\bin\\?$') -and ($_ -notmatch '(msys|cygwin)')
+}) -join ';'
+$unixTrue = Get-Command true -ErrorAction SilentlyContinue
+if ($unixTrue) {
+    Write-Host "ERROR: a Unix 'true' is still on PATH ($($unixTrue.Source)), so this run would not match a normal PC."
+    exit 1
+}
+
 $workspace = Join-Path ([IO.Path]::GetTempPath()) ("dct-ic-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path (Join-Path $workspace '.devcontainer') -Force | Out-Null
 Copy-Item -LiteralPath $Config -Destination (Join-Path $workspace '.devcontainer\devcontainer.json')
