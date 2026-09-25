@@ -23,7 +23,7 @@ Fleet work is on the bus in `terchris/urb-agents` —
 
 | # | What | Why this one |
 |---|---|---|
-| **1** | [PLAN-fix-windows-quickstart](PLAN-fix-windows-quickstart.md) phases 1–2: cross-shell `initializeCommand`, safe `install.ps1`, Windows CI job | Every new Windows install fails to start the container today (reported 2026-09-24). |
+| **1** | [PLAN-fix-windows-quickstart](../active/PLAN-fix-windows-quickstart.md) phases 1–2: cross-shell `initializeCommand`, safe `install.ps1`, Windows CI job | Every new Windows install fails to start the container today (reported 2026-09-24). |
 | **2** | [PLAN-p1-dct-shim](../active/PLAN-p1-dct-shim.md) phase 3: end-to-end test of the `uis` shim with `python-basic-webserver-database` | The shim is shipped but has never been confirmed end to end. First check the prerequisite: the template README no longer mentions `docker exec`, but it also has no `uis connect` / `uis status` sections for tasks 3.2–3.3 to test. |
 | **3** | Close out [PLAN-dct-exec-host-helper](../active/PLAN-dct-exec-host-helper.md): run the unverified checks, then move it to `completed/` | Shipped in 1.8.0; only its bookkeeping is open. |
 
@@ -32,7 +32,7 @@ Fleet work is on the bus in `terchris/urb-agents` —
 | What | Who | Since | Unblocks | Raised |
 |---|---|---|---|---|
 | Whether to open follow-up issue 5.3 in `helpers-no/sovdev-logger` | Terje | 2026-09-24 | Closing PLAN-dct-exec-host-helper | This session |
-| A Windows machine for the real-install test (task 3.2) | Terje | 2026-09-25 | Releasing PLAN-fix-windows-quickstart | [the plan](PLAN-fix-windows-quickstart.md) |
+| A Windows machine for the real-install test (task 3.2) | Terje | 2026-09-25 | Releasing PLAN-fix-windows-quickstart | [the plan](../active/PLAN-fix-windows-quickstart.md) |
 | An owner agent for helpers-no/client-provisioning | ops-dev | 2026-09-25 | The one-command install (PLAN-host-installer-handover phases 3–4) | urb-agents bus |
 
 ## If Terje wants work started, these rank highest

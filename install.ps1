@@ -89,6 +89,47 @@ if (Test-Path $extFile) {
     Write-Host "Created $extFile with Dev Containers extension recommendation"
 }
 
+# --- 4b. Install the Dev Containers extension in VS Code ---------------------------
+# Per user, no admin. VS Code itself comes from Intune (Company Portal) or the user's own
+# install, so `code` may not be on PATH yet: also look in the user and system install folders.
+
+$codeCmd = $null
+$codeOnPath = Get-Command code -ErrorAction SilentlyContinue
+if ($codeOnPath) {
+    $codeCmd = $codeOnPath.Source
+} else {
+    foreach ($candidate in @(
+        "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd",
+        "$env:ProgramFiles\Microsoft VS Code\bin\code.cmd"
+    )) {
+        if (Test-Path $candidate) { $codeCmd = $candidate; break }
+    }
+}
+
+Write-Host ""
+if (-not $codeCmd) {
+    Write-Host "VS Code was not found on this PC, so the Dev Containers extension could not be installed." -ForegroundColor Yellow
+    Write-Host "Install VS Code (on a work PC: from Company Portal), then run this again."
+} else {
+    # Native commands write progress to stderr; keep that from being treated as a script error.
+    $prevPref = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $installed = & $codeCmd --list-extensions 2>$null
+    if ($installed -contains $extId) {
+        Write-Host "Dev Containers extension is already installed in VS Code"
+    } else {
+        Write-Host "Installing the Dev Containers extension in VS Code..."
+        & $codeCmd --install-extension $extId | Out-Host
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Dev Containers extension installed"
+        } else {
+            Write-Host "Could not install the Dev Containers extension (code exit $LASTEXITCODE)." -ForegroundColor Yellow
+            Write-Host "Open VS Code and accept its offer to install the recommended extensions."
+        }
+    }
+    $ErrorActionPreference = $prevPref
+}
+
 # --- 5. Pull the Docker image -----------------------------------------------------
 
 Write-Host ""

@@ -21,4 +21,5 @@ INVESTIGATE files never live here — see [PLANS.md](../../PLANS.md).
 | Plan | Where it stands |
 |---|---|
 | [PLAN-dct-exec-host-helper](PLAN-dct-exec-host-helper.md) | All five phases done and shipped in 1.8.0. Some checks are marked unverified, and 5.3 (a follow-up issue in `sovdev-logger`) waits on a decision. |
+| [PLAN-fix-windows-quickstart](PLAN-fix-windows-quickstart.md) | Started 2026-09-25. Phase 1 (cross-shell `initializeCommand` + Windows CI) in progress. |
 | [PLAN-p1-dct-shim](PLAN-p1-dct-shim.md) | Phases 1–2 shipped in 1.7.36+. Phase 3 (end-to-end test with the rewritten template READMEs) is not started. |

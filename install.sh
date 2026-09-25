@@ -111,6 +111,40 @@ EXTENSIONS_EOF
     echo "Created $EXT_FILE with Dev Containers extension recommendation"
 fi
 
+# ─── 4b. Install the Dev Containers extension in VS Code ─────────────────────
+# Per user, no sudo. `code` is often not on PATH on macOS (the shell command is
+# opt-in), so also look inside the app bundle.
+
+CODE_CMD=""
+if command -v code >/dev/null 2>&1; then
+    CODE_CMD="$(command -v code)"
+else
+    for candidate in \
+        "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" \
+        "$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"; do
+        if [ -x "$candidate" ]; then
+            CODE_CMD="$candidate"
+            break
+        fi
+    done
+fi
+
+echo ""
+if [ -z "$CODE_CMD" ]; then
+    echo "VS Code was not found, so the Dev Containers extension could not be installed."
+    echo "Install VS Code (on a work Mac: from Self Service), then run this again."
+elif "$CODE_CMD" --list-extensions 2>/dev/null | grep -qx "$EXT_ID"; then
+    echo "Dev Containers extension is already installed in VS Code"
+else
+    echo "Installing the Dev Containers extension in VS Code..."
+    if "$CODE_CMD" --install-extension "$EXT_ID"; then
+        echo "Dev Containers extension installed"
+    else
+        echo "Could not install the Dev Containers extension."
+        echo "Open VS Code and accept its offer to install the recommended extensions."
+    fi
+fi
+
 # ─── 5. Pull the Docker image ────────────────────────────────────────────────
 
 echo ""

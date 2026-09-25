@@ -57,6 +57,6 @@
     "shutdownAction": "stopContainer",
     "updateRemoteUserUID": true,
     "init": true,
-    "initializeCommand": "mkdir -p .devcontainer.secrets/env-vars && hostname -s > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || hostname > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || true",
+    "initializeCommand": "ver || sh -c \"mkdir -p .devcontainer.secrets/env-vars && { hostname -s 2>/dev/null || hostname; } > .devcontainer.secrets/env-vars/.host-hostname; true\"",
     "postStartCommand": "bash /opt/devcontainer-toolbox/additions/config-host-info.sh --verify 2>/dev/null || true"
 }
