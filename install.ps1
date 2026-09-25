@@ -1,6 +1,18 @@
 # install.ps1 - First-time install of devcontainer-toolbox (image mode)
 # Run with: irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
 # If blocked: powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex"
+#
+# Installs the DCT host command `dct-init` for this user (no admin) and then runs it in the
+# current folder. dct-init writes .devcontainer\devcontainer.json, installs the VS Code Dev
+# Containers extension and downloads the image. Every dct-* command is installed by this script.
+# Afterwards, set up any new project folder by typing `dct-init` in it.
+#
+#   %LOCALAPPDATA%\devcontainer-toolbox\bin\dct-init.ps1   the logic
+#   %LOCALAPPDATA%\devcontainer-toolbox\bin\dct-init.cmd   what the user types; on the user PATH
+#
+# Testing: $env:DCT_INSTALL_SOURCE = <repo checkout> installs host-tools\ from that folder
+# instead of downloading them from GitHub; $env:DCT_INSTALL_REF = <branch> downloads them from
+# that branch instead of main (to test a branch before it is merged).
 
 # Everything runs inside a script block. With `irm | iex` this script runs in the user's own
 # PowerShell session, so `exit` would close their window before they could read the message, and
@@ -12,194 +24,93 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 $repo = "helpers-no/devcontainer-toolbox"
-$image = "ghcr.io/${repo}:latest"
-$templateUrl = "https://raw.githubusercontent.com/$repo/main/devcontainer-user-template.json"
+$ref = if ($env:DCT_INSTALL_REF) { $env:DCT_INSTALL_REF } else { "main" }
+$files = @("dct-init.ps1", "dct-init.cmd")
 
-Write-Host "Installing devcontainer-toolbox from $repo..."
+Write-Host "Installing DevContainer Toolbox from $repo ($ref)..."
 Write-Host ""
 
-# --- 1. Check Docker is available ------------------------------------------------
+# --- 1. Can this PC run the dct-init script at all? ---------------------------------
+# dct-init.cmd starts dct-init.ps1 with -ExecutionPolicy Bypass. That overrides the PC's default
+# policy, but not a policy the organisation enforces (Group Policy / Intune). If one of those
+# requires signed scripts, say so plainly instead of working around it.
 
-# Checked before anything is written, so a PC that is not ready is left untouched.
-
-$rancherExe = @(
-    "$env:LOCALAPPDATA\Programs\Rancher Desktop\Rancher Desktop.exe",
-    "$env:ProgramFiles\Rancher Desktop\Rancher Desktop.exe"
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
-
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    if ($rancherExe) {
-        Write-Host "Rancher Desktop is installed, but this PowerShell window cannot see it yet." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "Close this window, open a new PowerShell window, and run the same command again."
-    } else {
-        Write-Host "Rancher Desktop is not installed on this PC. DevContainer Toolbox needs it." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "On a work PC: install Rancher Desktop from Company Portal, or ask your IT department."
-        Write-Host "On your own PC: download it from https://rancherdesktop.io/"
-        Write-Host "Then run this command again."
-    }
+$enforced = @()
+foreach ($scope in "MachinePolicy", "UserPolicy") {
+    try {
+        $policy = Get-ExecutionPolicy -Scope $scope
+        if ($policy -in @("AllSigned", "Restricted")) { $enforced += "$scope=$policy" }
+    } catch { $null = $_ }   # scope not available: treat as not enforced
+}
+if ($enforced.Count -gt 0) {
+    Write-Host "ERR006: Your organisation's PowerShell policy does not allow the DevContainer Toolbox" -ForegroundColor Yellow
+    Write-Host "script to run on this PC ($($enforced -join ', '))."
+    Write-Host ""
+    Write-Host "Ask your IT department whether DevContainer Toolbox can be allowed, and show them this message."
     return
 }
 
-$prevPref = $ErrorActionPreference
-$ErrorActionPreference = "Continue"
-docker info *> $null
-$dockerRunning = ($LASTEXITCODE -eq 0)
-$ErrorActionPreference = $prevPref
+# --- 2. Install dct-init for this user ------------------------------------------------
 
-if (-not $dockerRunning) {
-    Write-Host "Rancher Desktop is not running." -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "1. Start Rancher Desktop from the Start menu."
-    Write-Host "2. Wait until it says it is ready. The first start can take a few minutes."
-    Write-Host "3. Then run this command again."
-    return
-}
+$bin = Join-Path $env:LOCALAPPDATA "devcontainer-toolbox\bin"
+New-Item -ItemType Directory -Path $bin -Force | Out-Null
+Write-Host "Installing the dct-init command to $bin..."
 
-# --- 2. Backup existing .devcontainer/ -------------------------------------------
-
-if (Test-Path ".devcontainer") {
-    Write-Host "Found existing .devcontainer/ directory."
-    Write-Host "Creating backup at .devcontainer.backup/..."
-    if (Test-Path ".devcontainer.backup") {
-        Remove-Item ".devcontainer.backup" -Recurse -Force
-    }
-    Rename-Item ".devcontainer" ".devcontainer.backup"
-    Write-Host "Backup created."
-    Write-Host ""
-}
-
-# --- 3. Download devcontainer-user-template.json ----------------------------------
-
-New-Item -ItemType Directory -Path ".devcontainer" -Force | Out-Null
-
-Write-Host "Downloading devcontainer.json from $templateUrl..."
-
-# PowerShell 5.1 may default to TLS 1.0 which GitHub rejects
+# PowerShell 5.1 may default to TLS 1.0, which GitHub rejects
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-try {
-    Invoke-WebRequest -Uri $templateUrl -OutFile ".devcontainer/devcontainer.json" -UseBasicParsing -TimeoutSec 30
-}
-catch {
-    Write-Host "Error: Failed to download devcontainer-user-template.json" -ForegroundColor Red
-    Write-Host "URL: $templateUrl"
-    Write-Host "$_"
-    return
-}
-
-$fileSize = (Get-Item ".devcontainer/devcontainer.json").Length
-if ($fileSize -eq 0) {
-    Write-Host "Error: Downloaded file is empty" -ForegroundColor Red
-    Remove-Item ".devcontainer/devcontainer.json" -Force -ErrorAction SilentlyContinue
-    return
-}
-
-Write-Host "Created .devcontainer/devcontainer.json ($fileSize bytes)"
-
-# --- 4. Ensure .vscode/extensions.json recommends Dev Containers ------------------
-
-$extId = "ms-vscode-remote.remote-containers"
-$extFile = ".vscode\extensions.json"
-
-New-Item -ItemType Directory -Path ".vscode" -Force | Out-Null
-
-if (Test-Path $extFile) {
-    $json = Get-Content $extFile -Raw | ConvertFrom-Json
-    if (-not $json.recommendations) {
-        $json | Add-Member -NotePropertyName recommendations -NotePropertyValue @($extId)
-    } elseif ($json.recommendations -notcontains $extId) {
-        $json.recommendations += $extId
-    } else {
-        Write-Host "Dev Containers extension already in $extFile"
-        $json = $null
-    }
-    if ($json) {
-        $json | ConvertTo-Json -Depth 10 | Set-Content $extFile -Encoding UTF8
-        Write-Host "Added Dev Containers extension to $extFile"
-    }
-} else {
-    @{ recommendations = @($extId) } | ConvertTo-Json -Depth 10 | Set-Content $extFile -Encoding UTF8
-    Write-Host "Created $extFile with Dev Containers extension recommendation"
-}
-
-# --- 4b. Install the Dev Containers extension in VS Code ---------------------------
-# Per user, no admin. VS Code itself comes from Intune (Company Portal) or the user's own
-# install, so `code` may not be on PATH yet: also look in the user and system install folders.
-
-$codeCmd = $null
-$codeOnPath = Get-Command code -ErrorAction SilentlyContinue
-if ($codeOnPath) {
-    $codeCmd = $codeOnPath.Source
-} else {
-    foreach ($candidate in @(
-        "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd",
-        "$env:ProgramFiles\Microsoft VS Code\bin\code.cmd"
-    )) {
-        if (Test-Path $candidate) { $codeCmd = $candidate; break }
-    }
-}
-
-Write-Host ""
-if (-not $codeCmd) {
-    Write-Host "VS Code was not found on this PC, so the Dev Containers extension could not be installed." -ForegroundColor Yellow
-    Write-Host "Install VS Code (on a work PC: from Company Portal), then run this again."
-} else {
-    # Native commands write progress to stderr; keep that from being treated as a script error.
-    $prevPref = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    $installed = & $codeCmd --list-extensions 2>$null
-    if ($installed -contains $extId) {
-        Write-Host "Dev Containers extension is already installed in VS Code"
-    } else {
-        Write-Host "Installing the Dev Containers extension in VS Code..."
-        & $codeCmd --install-extension $extId | Out-Host
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Dev Containers extension installed"
+foreach ($name in $files) {
+    $dest = Join-Path $bin $name
+    try {
+        if ($env:DCT_INSTALL_SOURCE) {
+            Copy-Item (Join-Path (Join-Path $env:DCT_INSTALL_SOURCE "host-tools") $name) $dest -Force
         } else {
-            Write-Host "Could not install the Dev Containers extension (code exit $LASTEXITCODE)." -ForegroundColor Yellow
-            Write-Host "Open VS Code and accept its offer to install the recommended extensions."
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$repo/$ref/host-tools/$name" -OutFile $dest -UseBasicParsing -TimeoutSec 30
         }
+        # A downloaded file may carry the "from the internet" mark, which a RemoteSigned policy blocks.
+        try { Unblock-File -Path $dest } catch { $null = $_ }   # not fatal; unsupported off Windows
+    } catch {
+        Write-Host ""
+        Write-Host "ERR020: Could not download $name." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Check that this PC is connected to the internet, then run this command again."
+        return
     }
-    $ErrorActionPreference = $prevPref
 }
+Write-Host "  Installed dct-init"
 
-# --- 5. Pull the Docker image -----------------------------------------------------
+# Put the folder on the user's PATH (no admin), and on this window's PATH so it works right away.
+try {
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not (($userPath -split ";") -contains $bin)) {
+        $newPath = (@($userPath -split ";" | Where-Object { $_ }) + $bin) -join ";"
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    }
+} catch {
+    Write-Host "  Warning: could not add $bin to your PATH; 'dct-init' will not be found by name." -ForegroundColor Yellow
+}
+if (-not (($env:Path -split ";") -contains $bin)) { $env:Path = "$env:Path;$bin" }
+
+# --- 3. Set up the current folder -----------------------------------------------------
+
+$ps = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source
+if (-not $ps) { $ps = (Get-Process -Id $PID).Path }   # not Windows (tests run on Linux pwsh)
 
 Write-Host ""
-Write-Host "Pulling container image: $image"
-Write-Host "(This may take a few minutes on first install...)"
 $prevPref = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
-docker pull $image
-$pullOk = ($LASTEXITCODE -eq 0)
+& $ps -NoProfile -ExecutionPolicy Bypass -File (Join-Path $bin "dct-init.ps1") -TargetDir (Get-Location).Path
+$rc = $LASTEXITCODE
 $ErrorActionPreference = $prevPref
 
-if (-not $pullOk) {
-    Write-Host ""
-    Write-Host "The DevContainer Toolbox image could not be downloaded." -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Check that this PC is connected to the internet and that Rancher Desktop is still running,"
-    Write-Host "then run this command again."
-    return
+# --- 4. How to use it next time -------------------------------------------------------
+
+Write-Host ""
+if ($rc -eq 0) {
+    Write-Host "Next time, set up a new project folder by typing 'dct-init' in it."
+} else {
+    Write-Host "When the problem above is fixed, type 'dct-init' in this folder."
 }
-
-# --- 6. Print next steps ----------------------------------------------------------
-
-Write-Host ""
-Write-Host "devcontainer-toolbox installed!" -ForegroundColor Green
-Write-Host ""
-Write-Host "Next steps:"
-Write-Host "  1. Open this folder in VS Code"
-Write-Host "  2. When prompted, click 'Reopen in Container'"
-Write-Host "     (or run: Cmd/Ctrl+Shift+P > 'Dev Containers: Reopen in Container')"
-Write-Host "  3. Inside the container, run: dev-help"
-Write-Host ""
-
-if (Test-Path ".devcontainer.backup") {
-    Write-Host "Note: Your previous .devcontainer/ was backed up to .devcontainer.backup/"
-    Write-Host ""
-}
+Write-Host "('dct-init' works in this window now, and in every new PowerShell window.)"
 
 }
