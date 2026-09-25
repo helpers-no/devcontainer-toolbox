@@ -33,12 +33,14 @@ Fleet work is on the bus in `terchris/urb-agents` —
 |---|---|---|---|---|
 | Whether to open follow-up issue 5.3 in `helpers-no/sovdev-logger` | Terje | 2026-09-24 | Closing PLAN-dct-exec-host-helper | This session |
 | A Windows machine for the real-install test (task 3.2) | Terje | 2026-09-25 | Releasing PLAN-fix-windows-quickstart | [the plan](PLAN-fix-windows-quickstart.md) |
+| An owner agent for helpers-no/client-provisioning | ops-dev | 2026-09-25 | The one-command install (PLAN-host-installer-handover phases 3–4) | urb-agents bus |
 
 ## If Terje wants work started, these rank highest
 
-1. [INVESTIGATE-outdated-software-versions](INVESTIGATE-outdated-software-versions.md) — every user gets the base image
-2. [PLAN-windows-testing](PLAN-windows-testing.md) — DCT claims Windows support that has never been tested
-3. [INVESTIGATE-image-retention](INVESTIGATE-image-retention.md) — every release adds image tags to ghcr.io
+1. [PLAN-host-installer-handover](PLAN-host-installer-handover.md) — DCT's side of the one-command install; the host installer itself goes to client-provisioning
+2. [INVESTIGATE-outdated-software-versions](INVESTIGATE-outdated-software-versions.md) — every user gets the base image
+3. [PLAN-windows-testing](PLAN-windows-testing.md) — DCT claims Windows support that has never been tested
+4. [INVESTIGATE-image-retention](INVESTIGATE-image-retention.md) — every release adds image tags to ghcr.io
 
 This ranking is the agent's proposal, not an agreed order. When this file's one-liner changes,
 refresh `fleet/status/devcontainer-toolbox.md` with `urb publish-status` (do not write that file

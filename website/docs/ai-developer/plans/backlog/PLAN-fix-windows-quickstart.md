@@ -8,11 +8,13 @@
 
 **Goal**: A Windows user who follows the Quick Start on [dct.sovereignsky.no/docs](https://dct.sovereignsky.no/docs/) gets a running devcontainer.
 
+**Who this is for**: ordinary Windows office users with no knowledge of git, containers or Docker (Terje, 2026-09-25). Every message this plan touches must be plain language with the next action spelled out. This plan fixes the defects in today's script; installing the prerequisites for the user (WSL, Rancher Desktop, VS Code) belongs to [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (decision 2026-09-25, see [PLAN-host-installer-handover](PLAN-host-installer-handover.md)).
+
 **Priority**: High — every new Windows install is affected. Reported by Terje, 2026-09-24.
 
 **Last Updated**: 2026-09-25
 
-**Related**: [PLAN-windows-testing](PLAN-windows-testing.md) (broader Windows validation; this plan fixes the known defects first)
+**Related**: [PLAN-host-installer-handover](PLAN-host-installer-handover.md) (DCT's side of the host-installer split), [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (the host installer), [PLAN-windows-testing](PLAN-windows-testing.md) (broader Windows validation)
 
 ---
 
@@ -82,8 +84,9 @@ The CI job is green on `windows-latest` and `ubuntu-latest`. The command still w
 ### Tasks
 
 - [ ] 2.1 Wrap the script body in a scriptblock (`& { … }`), so `$ErrorActionPreference` stays local to it, and replace every `exit 1` with an error message plus `return`. The user's window stays open and shows what went wrong.
-- [ ] 2.2 Check `$LASTEXITCODE` after `docker pull`. On failure, say "Is Rancher Desktop running?" and stop without printing "installed!".
-- [ ] 2.3 CI: in the `windows-latest` job, run `install.ps1` in a temp folder with `docker` missing from `PATH`. It must print the Docker error and leave the PowerShell process running (the job's next step still executes).
+- [ ] 2.2 Check `$LASTEXITCODE` after `docker pull`. On failure, stop without printing "installed!" and say what to do in plain words, for example: "Rancher Desktop is not running. Start Rancher Desktop from the Start menu, wait until it says it is ready, then run this again."
+- [ ] 2.3 Rewrite every message the script prints for a non-developer: no "PATH", "Docker CLI" or "image" without explanation; each error says what happened and the one thing to do next. The missing-Docker case uses the handover sentence from [PLAN-host-installer-handover](PLAN-host-installer-handover.md) Phase 2.
+- [ ] 2.4 CI: in the `windows-latest` job, run `install.ps1` in a temp folder with `docker` missing from `PATH`. It must print the Docker error and leave the PowerShell process running (the job's next step still executes).
 
 ### Validation
 
@@ -96,8 +99,10 @@ The CI job is green. The script still works end to end on a Windows machine (Pha
 ### Tasks
 
 - [ ] 3.1 Split the Quick Start in `website/docs/index.md` and `README.md` into two blocks: a `bash` block for Mac/Linux and a `powershell` block for Windows, so each copy button copies one command.
+- [ ] 3.1b Correct the Windows prerequisites in `website/docs/getting-started.md`: Rancher Desktop needs **Windows 11** x64 (not Windows 10), and `wsl --install` also installs Ubuntu, which asks for a Linux username the user does not need. Point to the "What your computer needs" page from [PLAN-host-installer-handover](PLAN-host-installer-handover.md) when it exists.
 - [ ] 3.2 **Needs a Windows machine (Terje, or someone he names):** in an empty folder, run the Quick Start from the site, open it in VS Code, and choose "Reopen in Container". The container must start, and `dev-help` must run.
-- [ ] 3.3 Release: bump `version.txt` (PATCH).
+- [ ] 3.3 Have one non-developer office user do 3.2 from the site alone, with Rancher Desktop and VS Code already installed, and note every point where they got stuck. Pass those notes to the owner of [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) through the bus.
+- [ ] 3.4 Release: bump `version.txt` (PATCH).
 
 ### Validation
 
@@ -109,7 +114,7 @@ Terje confirms 3.2 on Windows. `npm run build` passes for the docs change.
 
 - [ ] A fresh Windows install from the published Quick Start reaches a running container
 - [ ] `initializeCommand` is tested on Windows in CI
-- [ ] `install.ps1` never closes the user's window, and never reports success after a failed pull
+- [ ] `install.ps1` never closes the user's window, never reports success after a failed pull, and every message tells a non-developer what to do next
 - [ ] Each Quick Start copy button copies one platform's command
 
 ## Files to Modify
@@ -117,7 +122,7 @@ Terje confirms 3.2 on Windows. `npm run build` passes for the docs change.
 - `devcontainer-user-template.json`
 - `install.ps1`
 - `.github/workflows/ci-tests.yml` (new `windows-latest` job)
-- `website/docs/index.md`, `README.md`
+- `website/docs/index.md`, `README.md`, `website/docs/getting-started.md`
 - `website/docs/contributors/architecture/devcontainer-json.md` (note on `initializeCommand`)
 - `version.txt`
 

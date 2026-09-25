@@ -15,6 +15,7 @@ in progress.
 | Item | What it does | Priority |
 |---|---|---|
 | [PLAN-fix-windows-quickstart](PLAN-fix-windows-quickstart.md) | Make the Windows Quick Start work: cross-shell `initializeCommand`, safe `install.ps1`, split docs block | High |
+| [PLAN-host-installer-handover](PLAN-host-installer-handover.md) | DCT's side of the host-installer split: host requirements page, admin-free callable `install.ps1`/`install.sh`, plain-language handover | High |
 | [PLAN-finish-move-to-helpers-no](PLAN-finish-move-to-helpers-no.md) | Leftovers of the terchris → helpers-no move: fork network reversed, old image deleted (phases 1–2 done) | — |
 | [INVESTIGATE-outdated-software-versions](INVESTIGATE-outdated-software-versions.md) | Decide how the base image pins or tracks Node and other bundled software versions | — |
 | [INVESTIGATE-image-retention](INVESTIGATE-image-retention.md) | Retention policy for the image tags every release pushes to ghcr.io | — |
