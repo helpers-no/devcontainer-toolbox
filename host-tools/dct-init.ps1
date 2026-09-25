@@ -100,12 +100,27 @@ if (Test-Path ".devcontainer.backup") {
 
 # --- 2. Prerequisites (nothing is written before these pass) -----------------------
 
-$rancherExe = @(
-    "$env:LOCALAPPDATA\Programs\Rancher Desktop\Rancher Desktop.exe",
-    "$env:ProgramFiles\Rancher Desktop\Rancher Desktop.exe"
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
+$rancherDirs = @(
+    "$env:LOCALAPPDATA\Programs\Rancher Desktop",
+    "$env:ProgramFiles\Rancher Desktop"
+)
+$rancherExe = $rancherDirs | ForEach-Object { Join-Path $_ "Rancher Desktop.exe" } |
+    Where-Object { Test-Path $_ } | Select-Object -First 1
 
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+# `docker` comes with Rancher Desktop. A caller that installed Rancher in the same process (for
+# example client-provisioning's installer) has a stale PATH, so also look in Rancher's own bin
+# folder, and use the full path from here on (urb-agents #1543).
+$docker = $null
+$dockerOnPath = Get-Command docker -ErrorAction SilentlyContinue
+if ($dockerOnPath) {
+    $docker = $dockerOnPath.Source
+} else {
+    $docker = $rancherDirs | ForEach-Object { Join-Path $_ "resources\resources\win32\bin\docker.exe" } |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($docker) { $env:Path = "$(Split-Path $docker);$env:Path" }
+}
+
+if (-not $docker) {
     if ($rancherExe) {
         Exit-DctInit 1 "ERR002" @(
             "Rancher Desktop is installed, but this PowerShell window cannot see it yet.",
@@ -120,7 +135,7 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
         "Then run this command again.")
 }
 
-Invoke-Native { docker info *> $null }
+Invoke-Native { & $docker info *> $null }
 if ($LASTEXITCODE -ne 0) {
     Exit-DctInit 1 "ERR003" @(
         "Rancher Desktop is not running.",
@@ -219,7 +234,7 @@ if ($installed -contains $extId) {
 Write-Host ""
 Write-Host "Downloading the DevContainer Toolbox image: $image"
 Write-Host "(This may take a few minutes the first time...)"
-Invoke-Native { docker pull $image }
+Invoke-Native { & $docker pull $image }
 if ($LASTEXITCODE -ne 0) {
     Exit-DctInit 2 "ERR022" @(
         "The DevContainer Toolbox image could not be downloaded.",

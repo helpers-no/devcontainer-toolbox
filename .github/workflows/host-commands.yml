@@ -130,4 +130,12 @@ jobs:
           set -e
           test "$rc" = 3
           echo "system folder with Rancher stopped: still exit 3 (folder checked first)"
+          # Stale PATH (urb-agents #1543): docker only in ~/.rd/bin, which is not on PATH.
+          mkdir -p "$HOME/.rd/bin" "$stubs/codeonly"
+          cp "$stubs/docker" "$HOME/.rd/bin/docker"
+          cp "$stubs/code" "$stubs/codeonly/code"
+          p4=$(mktemp -d)
+          PATH="$stubs/codeonly:/usr/bin:/bin" "$HOME/.local/bin/dct-init" --target-dir "$p4"
+          test -s "$p4/.devcontainer/devcontainer.json"
+          echo "docker only in ~/.rd/bin: dct-init found it"
 

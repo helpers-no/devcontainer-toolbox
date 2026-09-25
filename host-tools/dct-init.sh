@@ -98,7 +98,26 @@ if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ "$(uname -m 2>/dev/null)" != "a
     fail 1 ERR005 "This Mac has an Intel processor. DevContainer Toolbox supports Macs with Apple Silicon (M1 or later)."
 fi
 
-if ! command -v docker >/dev/null 2>&1; then
+# `docker` comes with Rancher Desktop. A caller that installed Rancher in the same process has a
+# stale PATH, so also look where Rancher puts it (~/.rd/bin) and in the app bundle (urb-agents #1543).
+DOCKER=""
+if command -v docker >/dev/null 2>&1; then
+    DOCKER="$(command -v docker)"
+else
+    for candidate in \
+        "$HOME/.rd/bin/docker" \
+        "/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin/bin/docker" \
+        "$HOME/Applications/Rancher Desktop.app/Contents/Resources/resources/darwin/bin/docker" \
+        "/opt/rancher-desktop/resources/resources/linux/bin/docker"; do
+        if [ -x "$candidate" ]; then
+            DOCKER="$candidate"
+            PATH="$(dirname "$candidate"):$PATH"
+            break
+        fi
+    done
+fi
+
+if [ -z "$DOCKER" ]; then
     if [ -d "/Applications/Rancher Desktop.app" ] || [ -d "$HOME/Applications/Rancher Desktop.app" ]; then
         fail 1 ERR002 "Rancher Desktop is installed, but this terminal cannot see it yet." \
             "" \
@@ -112,7 +131,7 @@ if ! command -v docker >/dev/null 2>&1; then
         "Then run this command again."
 fi
 
-if ! docker info >/dev/null 2>&1; then
+if ! "$DOCKER" info >/dev/null 2>&1; then
     fail 1 ERR003 "Rancher Desktop is not running." \
         "" \
         "1. Start Rancher Desktop." \
@@ -209,7 +228,7 @@ fi
 echo ""
 echo "Downloading the DevContainer Toolbox image: $IMAGE"
 echo "(This may take a few minutes the first time...)"
-if ! docker pull "$IMAGE"; then
+if ! "$DOCKER" pull "$IMAGE"; then
     fail 2 ERR022 "The DevContainer Toolbox image could not be downloaded." \
         "" \
         "Check that this computer is connected to the internet and that Rancher Desktop is" \
