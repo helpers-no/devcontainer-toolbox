@@ -18,8 +18,8 @@ sequenceDiagram
     participant Container as Container
 
     Note over Host: Stage 1: initializeCommand
-    Host->>Host: mkdir -p .devcontainer.secrets/env-vars
-    Host->>Host: hostname -s > .host-hostname
+    Host->>Host: Mac/Linux: hostname -s > .host-hostname
+    Host->>Host: Windows: ver (nothing written)
 
     Note over Docker,Container: Stage 2: ENTRYPOINT
     Docker->>Container: Start container (PID 1)
@@ -55,26 +55,34 @@ sequenceDiagram
 **File:** Defined in `devcontainer.json`
 
 ```json
-"initializeCommand": "mkdir -p .devcontainer.secrets/env-vars && hostname -s > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || hostname > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || true"
+"initializeCommand": "ver || sh -c \"mkdir -p .devcontainer.secrets/env-vars && { hostname -s 2>/dev/null || hostname; } > .devcontainer.secrets/env-vars/.host-hostname; true\""
 ```
 
 Runs on the **host machine** before the container starts. This is the only stage that executes outside the container.
 
+**It must be valid in two shells.** The devcontainers CLI (which VS Code uses) runs a string `initializeCommand` with `cmd.exe /c` on Windows and with `/bin/sh -c` everywhere else (`devcontainers/cli`, `src/spec-node/utils.ts`, `runInitializeCommand`). A non-zero exit stops the container from starting. A bash-only command therefore broke new Windows installs from 2026-04-07 (`733dd73`) until 1.8.2, on every PC without Unix tools on PATH, which is the normal case. (With Git for Windows' Unix tools on PATH, a stray `true.exe` made the old command "succeed" by accident.)
+
+How the command works in each shell:
+
+- **`cmd.exe` (Windows):** `ver` succeeds, so `||` skips the rest. The quoted part is a single argument, so `cmd.exe` never interprets the `&&`, `>` or `{ }` inside it. Windows does not need the file: the hostname comes from `COMPUTERNAME` via `remoteEnv`.
+- **`/bin/sh` (Mac, Linux):** `ver` does not exist (one `ver: command not found` line in the log), so `||` runs the capture, which ends in `true` (exit 0).
+
+The `Host Commands` workflow (`.github/workflows/host-commands.yml`) checks both, on a `windows-latest` runner through the real devcontainers CLI and with `/bin/sh` on Linux. It also runs a control that confirms the old bash-only command still fails on Windows. The script first removes Git for Windows' Unix tools from PATH, as on a normal PC, because GitHub's runner has them and they hide the bug. **Change this command only with that workflow green.**
+
 **Purpose:** Capture the host's real hostname. This is needed because:
 - macOS (zsh) doesn't export `HOSTNAME` as an environment variable
 - `remoteEnv` can only pass variables that exist — if `HOSTNAME` is empty, `DEV_HOST_HOSTNAME` is empty
-- `hostname -s` works on Mac, Linux, and Windows (WSL2)
+- Windows does not need it: `COMPUTERNAME` reaches the container through `remoteEnv`
 
 **Output:** `.devcontainer.secrets/env-vars/.host-hostname` containing the short hostname (e.g., `MBP-J4G0G066W2`).
 
 **Cross-platform behavior:**
 
-| Platform | `hostname -s` returns |
-|----------|----------------------|
-| macOS | Machine name (e.g., `MBP-J4G0G066W2`) |
-| Linux | Machine hostname (e.g., `terje-desktop`) |
-| Windows (WSL2) | WSL hostname |
-| Windows (PowerShell) | Falls back to `hostname` without `-s` |
+| Platform | Result |
+|----------|--------|
+| macOS | `.host-hostname` = machine name (e.g., `MBP-J4G0G066W2`) |
+| Linux | `.host-hostname` = machine hostname (e.g., `terje-desktop`) |
+| Windows | No file written; `config-host-info.sh` uses `DEV_HOST_COMPUTERNAME` instead |
 
 ---
 
@@ -145,7 +153,7 @@ flowchart TD
 |--------|----------|------------------|
 | `DEV_HOST_HOSTNAME` | Linux | `${localEnv:HOSTNAME}` in remoteEnv — bash exports it |
 | `DEV_HOST_COMPUTERNAME` | Windows | `${localEnv:COMPUTERNAME}` in remoteEnv |
-| `.host-hostname` file | Mac, Linux, Windows | `initializeCommand` runs `hostname -s` on host |
+| `.host-hostname` file | Mac, Linux | `initializeCommand` runs `hostname -s` on host (skipped on Windows) |
 | Fallback `devcontainer` | All | When nothing else is available |
 
 ### Platform detection logic

@@ -1,0 +1,4 @@
+{
+    "image": "ghcr.io/helpers-no/devcontainer-toolbox:latest",
+    "initializeCommand": "mkdir -p .devcontainer.secrets/env-vars && hostname -s > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || hostname > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || true"
+}

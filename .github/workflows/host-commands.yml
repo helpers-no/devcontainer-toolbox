@@ -1,0 +1,67 @@
+# Host-side commands in the user template must work on every host OS.
+#
+# initializeCommand runs on the HOST, before the container exists: with /bin/sh on Mac/Linux and
+# with cmd.exe on Windows. A bash-only command broke new Windows installs from 2026-04-07 (733dd73)
+# on every PC without Unix tools on PATH, which is the normal case. The test script removes the
+# runner's Git-for-Windows Unix tools from PATH, because with them the old command "passes". See website/docs/ai-developer/plans/active/PLAN-fix-windows-quickstart.md.
+
+name: Host Commands
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'devcontainer-user-template.json'
+      - '.github/workflows/host-commands.yml'
+      - '.github/scripts/test-initialize-command.ps1'
+      - '.github/fixtures/host-commands/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'devcontainer-user-template.json'
+      - '.github/workflows/host-commands.yml'
+      - '.github/scripts/test-initialize-command.ps1'
+      - '.github/fixtures/host-commands/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  initialize-command-windows:
+    name: initializeCommand on Windows (cmd.exe)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install the devcontainers CLI (the engine VS Code uses)
+        run: npm install -g @devcontainers/cli@0.89.0
+
+      - name: Template command must succeed
+        shell: pwsh
+        run: ./.github/scripts/test-initialize-command.ps1 -Config devcontainer-user-template.json -Expect pass
+
+      - name: Control - the old bash-only command must fail
+        shell: pwsh
+        run: ./.github/scripts/test-initialize-command.ps1 -Config .github/fixtures/host-commands/bash-only-initialize-command.json -Expect fail
+
+  initialize-command-linux:
+    name: initializeCommand on Linux (/bin/sh)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Template command must write the host hostname
+        run: |
+          cmd=$(jq -r .initializeCommand devcontainer-user-template.json)
+          ws=$(mktemp -d)
+          cd "$ws"
+          /bin/sh -c "$cmd"
+          test -s .devcontainer.secrets/env-vars/.host-hostname
+          echo "host hostname captured: $(cat .devcontainer.secrets/env-vars/.host-hostname)"

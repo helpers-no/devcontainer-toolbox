@@ -4,17 +4,17 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active
 
 **Goal**: A Windows user who follows the Quick Start on [dct.sovereignsky.no/docs](https://dct.sovereignsky.no/docs/) gets a running devcontainer.
 
-**Who this is for**: ordinary Windows office users with no knowledge of git, containers or Docker (Terje, 2026-09-25). Every message this plan touches must be plain language with the next action spelled out. This plan fixes the defects in today's script; installing the prerequisites for the user (WSL, Rancher Desktop, VS Code) belongs to [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (decision 2026-09-25, see [PLAN-host-installer-handover](PLAN-host-installer-handover.md)).
+**Who this is for**: ordinary Windows office users with no knowledge of git, containers or Docker (Terje, 2026-09-25). Every message this plan touches must be plain language with the next action spelled out. This plan fixes the defects in today's script; installing the prerequisites for the user (WSL, Rancher Desktop, VS Code) belongs to [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (decision 2026-09-25, see [PLAN-host-installer-handover](../backlog/PLAN-host-installer-handover.md)).
 
-**Priority**: High — every new Windows install is affected. Reported by Terje, 2026-09-24.
+**Priority**: High — every new Windows install on a PC without Unix tools on PATH (the normal office PC) is affected. Reported by Terje, 2026-09-24.
 
 **Last Updated**: 2026-09-25
 
-**Related**: [PLAN-host-installer-handover](PLAN-host-installer-handover.md) (DCT's side of the host-installer split), [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (the host installer), [PLAN-windows-testing](PLAN-windows-testing.md) (broader Windows validation)
+**Related**: [PLAN-host-installer-handover](../backlog/PLAN-host-installer-handover.md) (DCT's side of the host-installer split), [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) (the host installer), [PLAN-windows-testing](../backlog/PLAN-windows-testing.md) (broader Windows validation)
 
 ---
 
@@ -56,11 +56,11 @@ The Quick Start runs it as `irm … | iex`, so the script runs inside the user's
 
 ---
 
-## Phase 1: Cross-shell `initializeCommand`
+## Phase 1: Cross-shell `initializeCommand` — IN PROGRESS
 
 ### Tasks
 
-- [ ] 1.1 Replace the template's `initializeCommand` with one string that is valid in both shells:
+- [x] 1.1 Replace the template's `initializeCommand` with one string that is valid in both shells:
 
   ```
   ver || sh -c "mkdir -p .devcontainer.secrets/env-vars && { hostname -s 2>/dev/null || hostname; } > .devcontainer.secrets/env-vars/.host-hostname; true"
@@ -71,7 +71,10 @@ The Quick Start runs it as `irm … | iex`, so the script runs inside the user's
   - Windows does not need the file: `config-host-info.sh` checks `DEV_HOST_COMPUTERNAME` (from `${localEnv:COMPUTERNAME}`) before it reads the file (lines 76–87).
   - Measured on macOS 2026-09-25: exit 0 and the same `.host-hostname` content as today's command. The side effect is one `ver: command not found` line in the startup log.
 - [ ] 1.2 CI: add a `windows-latest` job that reads `initializeCommand` from `devcontainer-user-template.json` and runs it with `cmd.exe /c` in a temp folder. It must exit 0. Also run the Linux side with `/bin/sh -c` and check that `.host-hostname` is non-empty. This guards against the regression coming back; nothing tested the Windows side before.
-- [ ] 1.3 Add a comment next to the command (in the contributor docs, since JSON has no comments) saying it runs under `cmd.exe` on Windows and must stay valid in both shells.
+  - **As built (2026-09-25):** a separate workflow, `.github/workflows/host-commands.yml`, not `ci-tests.yml`. `ci-tests.yml` only triggers on `.devcontainer/**` and builds the whole image first, and the template lives at the repo root. The Windows job runs the command through the **real devcontainers CLI** (`@devcontainers/cli@0.89.0`, `devcontainer up`), so it takes the same `cmd.exe /c` path, quoting included, as VS Code does. A **control step** runs the old bash-only command (`.github/fixtures/host-commands/bash-only-initialize-command.json`) and must see it fail, which proves the check can detect the bug. Script: `.github/scripts/test-initialize-command.ps1`.
+  - **First run on GitHub (PR #102, 2026-09-25):** the new command passed through the real CLI on `windows-latest`. **The control did not fail**: `cmd.exe` printed "The syntax of the command is incorrect." and "The system cannot find the path specified.", but the old command still exited 0, because the runner has Git for Windows' `usr\bin` (with `true.exe`) on PATH. A normal office PC does not. The script now strips Git/MSYS/Cygwin Unix tool folders from PATH and refuses to run if a Unix `true` is still found. That also sharpens the bug: it hits PCs **without** Unix tools on PATH, which is the normal case.
+- [x] 1.3 Add a comment next to the command (in the contributor docs, since JSON has no comments) saying it runs under `cmd.exe` on Windows and must stay valid in both shells.
+  - Done in `contributors/architecture/devcontainer-json.md` and `startup-lifecycle.md`. Both still showed the old command and claimed `.host-hostname` is written on Windows; corrected.
 
 ### Validation
 
@@ -85,8 +88,12 @@ The CI job is green on `windows-latest` and `ubuntu-latest`. The command still w
 
 - [ ] 2.1 Wrap the script body in a scriptblock (`& { … }`), so `$ErrorActionPreference` stays local to it, and replace every `exit 1` with an error message plus `return`. The user's window stays open and shows what went wrong.
 - [ ] 2.2 Check `$LASTEXITCODE` after `docker pull`. On failure, stop without printing "installed!" and say what to do in plain words, for example: "Rancher Desktop is not running. Start Rancher Desktop from the Start menu, wait until it says it is ready, then run this again."
-- [ ] 2.3 Rewrite every message the script prints for a non-developer: no "PATH", "Docker CLI" or "image" without explanation; each error says what happened and the one thing to do next. The missing-Docker case uses the handover sentence from [PLAN-host-installer-handover](PLAN-host-installer-handover.md) Phase 2.
-- [ ] 2.4 CI: in the `windows-latest` job, run `install.ps1` in a temp folder with `docker` missing from `PATH`. It must print the Docker error and leave the PowerShell process running (the job's next step still executes).
+- [ ] 2.3 Rewrite every message the script prints for a non-developer: no "PATH", "Docker CLI" or "image" without explanation; each error says what happened and the one thing to do next. The missing-Docker case uses the handover sentence from [PLAN-host-installer-handover](../backlog/PLAN-host-installer-handover.md) Phase 2.
+- [ ] 2.4 Stop deleting the user's previous backup: `install.ps1` removes an existing `.devcontainer.backup/` without asking (lines 30–31), so a second run loses the original setup. Refuse instead, with a plain message, the way `install.sh` already does. Found by client-provisioning (urb-agents #1505).
+- [x] 2.5 Install the VS Code Dev Containers extension as the user (`code --install-extension ms-vscode-remote.remote-containers`), finding `code` even when it is not on PATH yet (user and system install paths). If VS Code is missing, stop with a plain message. VS Code itself comes from Intune (Terje, 2026-09-25). The shared spec is [PLAN-host-installer-handover](../backlog/PLAN-host-installer-handover.md) task 2.8.
+  - **Done 2026-09-25, pulled forward for Terje's PC test**, in `install.ps1` and `install.sh` (step 4b). Finds `code` on PATH, else in the user and system install folders (Windows) or the app bundle (macOS); skips when `code --list-extensions` already lists it. **Limit until 2.1:** if VS Code is missing it prints a plain warning and continues, rather than exiting `1`, because `exit` inside `irm | iex` would close the user's window.
+  - Checked: `install.sh` shellcheck clean; its step 4b run against a stub `code` (installs when missing, skips when present) and, with no `code` on PATH, it found this Mac's real VS Code in the app bundle. `install.ps1` parses with 0 errors and has 0 PSScriptAnalyzer findings apart from `PSAvoidUsingWriteHost` (the script has always used `Write-Host`). **Not run on Windows yet.**
+- [ ] 2.6 CI: in the `windows-latest` job, run `install.ps1` in a temp folder with `docker` missing from `PATH`. It must print the Docker error and leave the PowerShell process running (the job's next step still executes).
 
 ### Validation
 
@@ -99,7 +106,7 @@ The CI job is green. The script still works end to end on a Windows machine (Pha
 ### Tasks
 
 - [ ] 3.1 Split the Quick Start in `website/docs/index.md` and `README.md` into two blocks: a `bash` block for Mac/Linux and a `powershell` block for Windows, so each copy button copies one command.
-- [ ] 3.1b Correct the Windows prerequisites in `website/docs/getting-started.md`: Rancher Desktop needs **Windows 11** x64 (not Windows 10), and `wsl --install` also installs Ubuntu, which asks for a Linux username the user does not need. Point to the "What your computer needs" page from [PLAN-host-installer-handover](PLAN-host-installer-handover.md) when it exists.
+- [ ] 3.1b Correct the Windows prerequisites in `website/docs/getting-started.md`: Rancher Desktop needs **Windows 11** x64 (not Windows 10), and `wsl --install` also installs Ubuntu, which asks for a Linux username the user does not need. Point to the "What your computer needs" page from [PLAN-host-installer-handover](../backlog/PLAN-host-installer-handover.md) when it exists.
 - [ ] 3.2 **Needs a Windows machine (Terje, or someone he names):** in an empty folder, run the Quick Start from the site, open it in VS Code, and choose "Reopen in Container". The container must start, and `dev-help` must run.
 - [ ] 3.3 Have one non-developer office user do 3.2 from the site alone, with Rancher Desktop and VS Code already installed, and note every point where they got stuck. Pass those notes to the owner of [helpers-no/client-provisioning](https://github.com/helpers-no/client-provisioning) through the bus.
 - [ ] 3.4 Release: bump `version.txt` (PATCH).
@@ -128,4 +135,4 @@ Terje confirms 3.2 on Windows. `npm run build` passes for the docs change.
 
 ## Not in this plan
 
-- PowerShell 5.1 on old Windows 10 builds may default to TLS 1.0 *before* the script's own TLS 1.2 line runs, so `irm` itself could fail. Current Windows 10/11 is not affected; handle it in [PLAN-windows-testing](PLAN-windows-testing.md) if it shows up.
+- PowerShell 5.1 on old Windows 10 builds may default to TLS 1.0 *before* the script's own TLS 1.2 line runs, so `irm` itself could fail. Current Windows 10/11 is not affected; handle it in [PLAN-windows-testing](../backlog/PLAN-windows-testing.md) if it shows up.

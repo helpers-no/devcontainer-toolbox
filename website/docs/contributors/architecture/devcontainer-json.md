@@ -289,19 +289,27 @@ Adds a tiny init process (`tini`) as PID 1 inside the container. This properly h
 ### initializeCommand
 
 ```json
-"initializeCommand": "mkdir -p .devcontainer.secrets/env-vars && hostname -s > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || hostname > .devcontainer.secrets/env-vars/.host-hostname 2>/dev/null || true"
+"initializeCommand": "ver || sh -c \"mkdir -p .devcontainer.secrets/env-vars && { hostname -s 2>/dev/null || hostname; } > .devcontainer.secrets/env-vars/.host-hostname; true\""
 ```
 
 Runs on the **host machine** before the container starts. This is the only devcontainer lifecycle command that executes outside the container.
 
+**It must be valid in two shells.** The devcontainers CLI (which VS Code uses) runs a string `initializeCommand` with `cmd.exe /c` on Windows and with `/bin/sh -c` everywhere else (`devcontainers/cli`, `src/spec-node/utils.ts`, `runInitializeCommand`). A non-zero exit stops the container from starting. A bash-only command therefore broke new Windows installs from 2026-04-07 (`733dd73`) until 1.8.2, on every PC without Unix tools on PATH, which is the normal case. (With Git for Windows' Unix tools on PATH, a stray `true.exe` made the old command "succeed" by accident.)
+
+How the command works in each shell:
+
+- **`cmd.exe` (Windows):** `ver` succeeds, so `||` skips the rest. The quoted part is a single argument, so `cmd.exe` never interprets the `&&`, `>` or `{ }` inside it. Windows does not need the file: the hostname comes from `COMPUTERNAME` via `remoteEnv`.
+- **`/bin/sh` (Mac, Linux):** `ver` does not exist (one `ver: command not found` line in the log), so `||` runs the capture, which ends in `true` (exit 0).
+
+The `Host Commands` workflow (`.github/workflows/host-commands.yml`) checks both, on a `windows-latest` runner through the real devcontainers CLI and with `/bin/sh` on Linux. It also runs a control that confirms the old bash-only command still fails on Windows. The script first removes Git for Windows' Unix tools from PATH, as on a normal PC, because GitHub's runner has them and they hide the bug. **Change this command only with that workflow green.**
+
 Used to capture the host's real hostname, which is not available via `remoteEnv` on macOS (zsh doesn't export `HOSTNAME`). The file `.devcontainer.secrets/env-vars/.host-hostname` is read by `config-host-info.sh` as a fallback when `DEV_HOST_HOSTNAME` is empty.
 
-| Platform | What `hostname -s` returns |
-|----------|---------------------------|
-| macOS | Machine name (e.g., `MBP-J4G0G066W2`) |
-| Linux | Machine hostname (e.g., `terje-desktop`) |
-| Windows (WSL2) | WSL hostname |
-| Windows (PowerShell) | Falls back to `hostname` without `-s` |
+| Platform | Result |
+|----------|--------|
+| macOS | `.host-hostname` = machine name (e.g., `MBP-J4G0G066W2`) |
+| Linux | `.host-hostname` = machine hostname (e.g., `terje-desktop`) |
+| Windows | No file written; `config-host-info.sh` uses `DEV_HOST_COMPUTERNAME` instead |
 
 The `mkdir -p` ensures the secrets directory exists on fresh installs. The file is in `.devcontainer.secrets/` which is gitignored.
 
