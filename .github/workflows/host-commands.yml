@@ -12,15 +12,21 @@ on:
     branches: [main]
     paths:
       - 'devcontainer-user-template.json'
+      - 'install.ps1'
+      - 'install.sh'
+      - 'host-tools/**'
       - '.github/workflows/host-commands.yml'
-      - '.github/scripts/test-initialize-command.ps1'
+      - '.github/scripts/**'
       - '.github/fixtures/host-commands/**'
   pull_request:
     branches: [main]
     paths:
       - 'devcontainer-user-template.json'
+      - 'install.ps1'
+      - 'install.sh'
+      - 'host-tools/**'
       - '.github/workflows/host-commands.yml'
-      - '.github/scripts/test-initialize-command.ps1'
+      - '.github/scripts/**'
       - '.github/fixtures/host-commands/**'
   workflow_dispatch:
 
@@ -65,3 +71,63 @@ jobs:
           /bin/sh -c "$cmd"
           test -s .devcontainer.secrets/env-vars/.host-hostname
           echo "host hostname captured: $(cat .devcontainer.secrets/env-vars/.host-hostname)"
+
+  dct-init-windows:
+    name: dct-init on Windows (install.ps1, user PATH, exit codes)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install via install.ps1, then use dct-init by name from a new shell
+        shell: pwsh
+        run: ./.github/scripts/test-dct-init-windows.ps1
+
+  dct-init-linux:
+    name: dct-init on Linux (install.sh, exit codes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install via install.sh, then use dct-init by name
+        run: |
+          set -u
+          stubs=$(mktemp -d)
+          cat > "$stubs/docker" <<'STUB'
+          #!/bin/sh
+          [ "${DCT_STUB_DOCKER:-up}" = down ] && exit 1
+          case "$1" in pull) echo stub pull;; esac
+          exit 0
+          STUB
+          cat > "$stubs/code" <<'STUB'
+          #!/bin/sh
+          case "$1" in --install-extension) echo stub installed;; esac
+          exit 0
+          STUB
+          sed -i 's/^ *//' "$stubs/docker" "$stubs/code"
+          chmod +x "$stubs"/*
+          export PATH="$stubs:$HOME/.local/bin:$PATH" DCT_INSTALL_SOURCE="$GITHUB_WORKSPACE"
+          p1=$(mktemp -d); p2=$(mktemp -d); p3=$(mktemp -d)
+          (cd "$p1" && bash "$GITHUB_WORKSPACE/install.sh")
+          test -s "$p1/.devcontainer/devcontainer.json"
+          for t in dct-init dct-exec dct-find-container; do test -x "$HOME/.local/bin/$t"; done
+          (cd "$p2" && dct-init)
+          test -s "$p2/.devcontainer/devcontainer.json"
+          set +e
+          (cd "$p3" && DCT_STUB_DOCKER=down dct-init); rc=$?
+          set -e
+          test "$rc" = 1
+          test ! -e "$p3/.devcontainer"
+          echo "not running: exit 1, nothing written"
+          set +e
+          dct-init --target-dir /usr; rc=$?
+          set -e
+          test "$rc" = 3
+          echo "system folder: exit 3"
+          set +e
+          DCT_STUB_DOCKER=down dct-init --target-dir /usr; rc=$?
+          set -e
+          test "$rc" = 3
+          echo "system folder with Rancher stopped: still exit 3 (folder checked first)"
+

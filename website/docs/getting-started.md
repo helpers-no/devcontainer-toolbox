@@ -71,7 +71,7 @@ If you see "running scripts is disabled on this system":
 powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex"
 ```
 
-This creates a `.devcontainer/devcontainer.json` in your project, installs the Dev Containers extension in VS Code, and downloads the pre-built container image. If Rancher Desktop isn't installed or isn't running, it tells you what to do and changes nothing.
+The installer first installs the **`dct-init`** command for you (no administrator rights needed), then runs it in this folder. `dct-init` creates `.devcontainer/devcontainer.json`, installs the Dev Containers extension in VS Code, and downloads the pre-built container image. If Rancher Desktop isn't installed or isn't running, it tells you what to do and changes nothing.
 
 ### Step 2: Open in VS Code and Reopen in Container
 
@@ -80,6 +80,53 @@ Open the project in VS Code. When prompted "Reopen in Container", click it.
 The container starts in seconds since the image was already pulled during install. Run `dev-setup` inside the container to install development tools.
 
 That's it! You're ready to start developing.
+
+## Setting Up Another Project: `dct-init`
+
+You only run the long install command once. After that, set up any new project folder by typing **`dct-init`** in it:
+
+**Windows** (open a **new** PowerShell window first, so it finds the command):
+
+```powershell
+mkdir $HOME\another-project; cd $HOME\another-project
+dct-init
+```
+
+**Mac / Linux:**
+
+```bash
+mkdir -p ~/another-project && cd ~/another-project
+dct-init
+```
+
+Then open the folder in VS Code (`code .`) and click **Reopen in Container**, as in Step 2.
+
+**What `dct-init` does:**
+
+- It checks first, before it writes anything:
+  - that you ran it in a project folder, not a system folder, the root of a drive, or your home folder itself
+  - that Rancher Desktop is installed and running
+  - that VS Code is installed
+- Then it creates `.devcontainer/devcontainer.json`, installs the Dev Containers extension, and downloads the image.
+- If the folder already has a `.devcontainer/`, it moves it to `.devcontainer.backup/`. It never overwrites an existing backup.
+
+When something is missing, it says in one sentence what to do. The message starts with a code, for example `ERR003: Rancher Desktop is not running.`, which helps if you need to ask for help.
+
+**Where it is installed:**
+
+- Windows: `%LOCALAPPDATA%\devcontainer-toolbox\bin`, added to your user PATH.
+- Mac and Linux: `~/.local/bin`.
+
+To set up a folder other than the one you are in, use `dct-init -TargetDir <folder>` (Windows) or `dct-init --target-dir <folder>` (Mac/Linux).
+
+:::note For scripts and IT tools
+`dct-init` never asks questions and never needs administrator rights, and it returns an exit code:
+
+- `0`: done
+- `1`: something it needs is missing
+- `2`: a download failed
+- `3`: a problem with the folder
+:::
 
 ## Migrating from an Older Version
 
@@ -90,7 +137,7 @@ If your project has an older `.devcontainer/` folder with many files (Dockerfile
    mv .devcontainer .devcontainer.old
    ```
 
-2. Run the installer again from your project directory:
+2. Run `dct-init` in your project directory. If you don't have `dct-init` yet, run the install command from Step 1 instead:
    ```bash
    curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
    ```
@@ -110,7 +157,7 @@ The new approach uses a pre-built image so your `.devcontainer/` folder contains
 
 Each project's devcontainer gets a random Docker container name, not a fixed one — this is what lets you run multiple projects' devcontainers (or multiple worktrees of the same project) at the same time. That means host-side scripts can't hardcode a container name to `docker exec` into.
 
-Step 1's installer also installs two small helpers to `~/.local/bin` (macOS/Linux only):
+Step 1's installer also installs two small helpers to `~/.local/bin`, next to `dct-init` (macOS/Linux only):
 
 - `dct-find-container` — prints the name of the running devcontainer for the current repo
 - `dct-exec <command> [args]` — runs `<command>` inside it
@@ -134,7 +181,7 @@ If you're writing your own host-side script (for this project or another one), u
 :::
 
 :::note Windows
-`dct-exec` is macOS/Linux only for now — it's a bash script and there's no `.ps1` equivalent yet.
+`dct-exec` and `dct-find-container` are macOS/Linux only for now: they are bash scripts, and the Windows versions are planned. `dct-init` works on Windows too.
 :::
 
 ---

@@ -1,233 +1,94 @@
 #!/bin/bash
 # install.sh - First-time install of devcontainer-toolbox (image mode)
 # Run with: curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
-set -e
+#
+# Installs the DCT host commands for this user (no sudo) and then sets up the current folder:
+#   dct-init            set up a project folder (writes .devcontainer/, installs the VS Code
+#                       Dev Containers extension, downloads the image)
+#   dct-find-container  find the running devcontainer for the current folder
+#   dct-exec            run a command inside that devcontainer
+# All three go to ~/.local/bin. Every dct-* command is installed by this script.
+#
+# Afterwards, set up any new project folder by typing `dct-init` in it.
+# Exit code: dct-init's (0 done, 1 prerequisite missing, 2 download failed, 3 folder problem).
+#
+# Testing: DCT_INSTALL_SOURCE=<repo checkout> installs host-tools/ from that folder instead of
+# downloading them from GitHub; DCT_INSTALL_REF=<branch> downloads them from that branch instead
+# of main (to test a branch before it is merged).
 
 REPO="helpers-no/devcontainer-toolbox"
-IMAGE="ghcr.io/$REPO:latest"
-TEMPLATE_URL="https://raw.githubusercontent.com/$REPO/main/devcontainer-user-template.json"
-
-echo "Installing devcontainer-toolbox from $REPO..."
-echo ""
-
-# ─── 1. Check Docker is available ────────────────────────────────────────────
-
-# Checked before anything is written, so a machine that is not ready is left untouched.
-
-if ! command -v docker &> /dev/null; then
-    if [ -d "/Applications/Rancher Desktop.app" ] || [ -d "$HOME/Applications/Rancher Desktop.app" ]; then
-        echo "Rancher Desktop is installed, but this terminal cannot see it yet."
-        echo ""
-        echo "Start Rancher Desktop, wait until it says it is ready, then open a new terminal"
-        echo "window and run the same command again."
-    else
-        echo "Rancher Desktop is not installed. DevContainer Toolbox needs it."
-        echo ""
-        echo "On a work Mac: install Rancher Desktop from Self Service, or ask your IT department."
-        echo "On your own computer: download it from https://rancherdesktop.io/"
-        echo "Then run this command again."
-    fi
-    exit 1
-fi
-
-if ! docker info >/dev/null 2>&1; then
-    echo "Rancher Desktop is not running."
-    echo ""
-    echo "1. Start Rancher Desktop."
-    echo "2. Wait until it says it is ready. The first start can take a few minutes."
-    echo "3. Then run this command again."
-    exit 1
-fi
-
-# ─── 2. Backup existing .devcontainer/ ───────────────────────────────────────
-
-if [ -d ".devcontainer.backup" ]; then
-    echo "Error: .devcontainer.backup/ already exists."
-    echo ""
-    echo "Remove or rename it before re-running this script, e.g.:"
-    echo "    mv .devcontainer.backup .devcontainer.backup.old"
-    exit 1
-fi
-
-if [ -d ".devcontainer" ]; then
-    echo "Found existing .devcontainer/ directory."
-    echo "Creating backup at .devcontainer.backup/..."
-    mv .devcontainer .devcontainer.backup
-    echo "Backup created."
-    echo ""
-fi
-
-# ─── 3. Download devcontainer-user-template.json ─────────────────────────────
-
-mkdir -p .devcontainer
-
-echo "Downloading devcontainer.json from $TEMPLATE_URL..."
-if command -v curl >/dev/null 2>&1; then
-    if ! curl -fsSL "$TEMPLATE_URL" -o .devcontainer/devcontainer.json; then
-        echo "Error: Failed to download devcontainer-user-template.json"
-        exit 1
-    fi
-elif command -v wget >/dev/null 2>&1; then
-    if ! wget -qO .devcontainer/devcontainer.json "$TEMPLATE_URL"; then
-        echo "Error: Failed to download devcontainer-user-template.json"
-        exit 1
-    fi
-else
-    echo "Error: Neither 'curl' nor 'wget' is available"
-    exit 1
-fi
-
-if [ ! -s .devcontainer/devcontainer.json ]; then
-    echo "Error: Downloaded file is empty"
-    exit 1
-fi
-
-echo "Created .devcontainer/devcontainer.json"
-
-# ─── 4. Ensure .vscode/extensions.json recommends Dev Containers ─────────────
-
-EXT_ID="ms-vscode-remote.remote-containers"
-EXT_FILE=".vscode/extensions.json"
-
-mkdir -p .vscode
-
-if [ -f "$EXT_FILE" ]; then
-    if grep -q "$EXT_ID" "$EXT_FILE" 2>/dev/null; then
-        echo "Dev Containers extension already in $EXT_FILE"
-    elif command -v python3 >/dev/null 2>&1; then
-        python3 -c "
-import json, sys
-path = '$EXT_FILE'
-ext_id = '$EXT_ID'
-with open(path) as f:
-    data = json.load(f)
-recs = data.setdefault('recommendations', [])
-if ext_id not in recs:
-    recs.append(ext_id)
-with open(path, 'w') as f:
-    json.dump(data, f, indent=2)
-    f.write('\n')
-"
-        echo "Added Dev Containers extension to $EXT_FILE"
-    else
-        echo "Warning: Could not update existing $EXT_FILE (python3 not available)"
-    fi
-else
-    cat > "$EXT_FILE" << 'EXTENSIONS_EOF'
-{
-  "recommendations": [
-    "ms-vscode-remote.remote-containers"
-  ]
-}
-EXTENSIONS_EOF
-    echo "Created $EXT_FILE with Dev Containers extension recommendation"
-fi
-
-# ─── 4b. Install the Dev Containers extension in VS Code ─────────────────────
-# Per user, no sudo. `code` is often not on PATH on macOS (the shell command is
-# opt-in), so also look inside the app bundle.
-
-CODE_CMD=""
-if command -v code >/dev/null 2>&1; then
-    CODE_CMD="$(command -v code)"
-else
-    for candidate in \
-        "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" \
-        "$HOME/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"; do
-        if [ -x "$candidate" ]; then
-            CODE_CMD="$candidate"
-            break
-        fi
-    done
-fi
-
-echo ""
-if [ -z "$CODE_CMD" ]; then
-    echo "VS Code was not found, so the Dev Containers extension could not be installed."
-    echo "Install VS Code (on a work Mac: from Self Service), then run this again."
-elif "$CODE_CMD" --list-extensions 2>/dev/null | grep -qx "$EXT_ID"; then
-    echo "Dev Containers extension is already installed in VS Code"
-else
-    echo "Installing the Dev Containers extension in VS Code..."
-    if "$CODE_CMD" --install-extension "$EXT_ID"; then
-        echo "Dev Containers extension installed"
-    else
-        echo "Could not install the Dev Containers extension."
-        echo "Open VS Code and accept its offer to install the recommended extensions."
-    fi
-fi
-
-# ─── 5. Pull the Docker image ────────────────────────────────────────────────
-
-echo ""
-echo "Pulling container image: $IMAGE"
-echo "(This may take a few minutes on first install...)"
-if ! docker pull "$IMAGE"; then
-    echo ""
-    echo "Error: Failed to pull $IMAGE"
-    echo ""
-    echo "This image is public and does not require a Docker login. If you saw \"denied\","
-    echo "try clearing any stale ghcr.io credentials:"
-    echo "    docker logout ghcr.io"
-    echo "then re-run this script."
-    exit 1
-fi
-
-# ─── 6. Install dct-exec / dct-find-container host helpers ──────────────────
-# These run on the HOST (not inside the devcontainer) and let host-side
-# scripts find/exec into this project's own devcontainer without hardcoding
-# a container name. macOS/Linux only (bash required) — skipped on Windows.
-
+REF="${DCT_INSTALL_REF:-main}"
 BIN_DIR="$HOME/.local/bin"
+TOOLS="dct-init dct-find-container dct-exec"
 
-if [ "$(uname -s 2>/dev/null)" = "Linux" ] || [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
-    mkdir -p "$BIN_DIR"
-    echo ""
-    echo "Installing dct-exec and dct-find-container to $BIN_DIR..."
+echo "Installing DevContainer Toolbox from $REPO ($REF)..."
+echo ""
 
-    for name in dct-exec dct-find-container; do
-        url="https://raw.githubusercontent.com/$REPO/main/host-tools/$name.sh"
-        dest="$BIN_DIR/$name"
+case "$(uname -s 2>/dev/null)" in
+    Linux|Darwin) ;;
+    *)
+        echo "ERR001: This installer is for macOS and Linux. On Windows, use the PowerShell command:"
+        echo "    irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex"
+        exit 1
+        ;;
+esac
+
+# ─── 1. Install the dct-* commands ───────────────────────────────────────────
+
+mkdir -p "$BIN_DIR"
+echo "Installing the DevContainer Toolbox commands to $BIN_DIR..."
+
+for name in $TOOLS; do
+    dest="$BIN_DIR/$name"
+    ok=0
+    if [ -n "${DCT_INSTALL_SOURCE:-}" ]; then
+        cp "$DCT_INSTALL_SOURCE/host-tools/$name.sh" "$dest" 2>/dev/null && ok=1
+    else
+        url="https://raw.githubusercontent.com/$REPO/$REF/host-tools/$name.sh"
         if command -v curl >/dev/null 2>&1; then
-            ok=1; curl -fsSL "$url" -o "$dest" || ok=0
+            curl -fsSL "$url" -o "$dest" && ok=1
         elif command -v wget >/dev/null 2>&1; then
-            ok=1; wget -qO "$dest" "$url" || ok=0
-        else
-            ok=0
+            wget -qO "$dest" "$url" && ok=1
         fi
-        if [ "$ok" = "1" ] && [ -s "$dest" ]; then
-            chmod +x "$dest"
-            echo "  Installed $dest"
-        else
-            echo "  Warning: Failed to install $name (skipping — this doesn't affect the devcontainer itself)"
-            rm -f "$dest"
-        fi
-    done
-
-    case ":$PATH:" in
-        *":$BIN_DIR:"*) ;;
-        *)
+    fi
+    if [ "$ok" = "1" ] && [ -s "$dest" ]; then
+        chmod +x "$dest"
+        echo "  Installed $name"
+    else
+        rm -f "$dest"
+        if [ "$name" = "dct-init" ]; then
             echo ""
-            echo "Note: $BIN_DIR is not on your PATH."
-            echo "Add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) to use dct-exec:"
-            echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
-            ;;
-    esac
-fi
+            echo "ERR020: Could not download dct-init."
+            echo ""
+            echo "Check that this computer is connected to the internet, then run this command again."
+            exit 2
+        fi
+        echo "  Warning: could not install $name (the devcontainer itself is not affected)"
+    fi
+done
 
-# ─── 7. Print next steps ─────────────────────────────────────────────────────
+# ─── 2. Set up the current folder ────────────────────────────────────────────
 
 echo ""
-echo "✅ devcontainer-toolbox installed!"
-echo ""
-echo "Next steps:"
-echo "  1. Open this folder in VS Code"
-echo "  2. When prompted, click 'Reopen in Container'"
-echo "     (or run: Cmd/Ctrl+Shift+P > 'Dev Containers: Reopen in Container')"
-echo "  3. Inside the container, run: dev-help"
-echo ""
+"$BIN_DIR/dct-init"
+rc=$?
 
-if [ -d ".devcontainer.backup" ]; then
-    echo "Note: Your previous .devcontainer/ was backed up to .devcontainer.backup/"
-    echo ""
-fi
+# ─── 3. How to use it next time ──────────────────────────────────────────────
+
+echo ""
+case ":$PATH:" in
+    *":$BIN_DIR:"*)
+        if [ "$rc" = "0" ]; then
+            echo "Next time, set up a new project folder by typing 'dct-init' in it."
+        else
+            echo "When the problem above is fixed, run 'dct-init' in this folder."
+        fi
+        ;;
+    *)
+        echo "Note: $BIN_DIR is not on your PATH, so 'dct-init' is not found by name yet."
+        echo "Add this line to your shell profile (~/.zshrc or ~/.bashrc), then open a new terminal:"
+        echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
+        ;;
+esac
+
+exit "$rc"

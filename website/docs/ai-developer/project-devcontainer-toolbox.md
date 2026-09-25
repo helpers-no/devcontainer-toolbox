@@ -26,8 +26,9 @@ current with `dev-update`. The documentation site is published at
     `ghcr.io/helpers-no/devcontainer-toolbox`
   - the install, config and service scripts in `.devcontainer/additions/`
   - the in-container `dev-*` commands in `.devcontainer/manage/`
-  - the host installers `install.sh` / `install.ps1` and the host helpers in `host-tools/`
-    (`dct-exec`, `dct-find-container`)
+  - the host installers `install.sh` / `install.ps1` and the host commands in `host-tools/`
+    (`dct-init`, `dct-exec`, `dct-find-container`). Every `dct-*` command is installed by the install
+    scripts (Terje, 2026-09-25)
   - the Docusaurus site in `website/`
 - Does not build:
   - the project templates or the AI workflow templates that `dev-template` installs. Those live in
