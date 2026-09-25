@@ -77,6 +77,38 @@ cmd /c "dct-init -TargetDir `"$env:SystemRoot\System32`""
 Check "System32 with Rancher stopped: still exit 3 (folder checked first)" ($LASTEXITCODE -eq 3)
 $env:DCT_STUB_DOCKER = 'up'
 
+# 4. Stale PATH (urb-agents #1543): an installer that just installed Rancher Desktop in the same
+#    process does not see Rancher's bin folder on PATH. dct-init must find docker.exe there itself.
+$rdBin = Join-Path $env:LOCALAPPDATA 'Programs\Rancher Desktop\resources\resources\win32\bin'
+New-Item -ItemType Directory -Path $rdBin -Force | Out-Null
+$stubSource = @'
+public static class DockerStub {
+    public static int Main(string[] args) {
+        if (System.Environment.GetEnvironmentVariable("DCT_STUB_DOCKER") == "down") return 1;
+        if (args.Length > 0 && args[0] == "pull") System.Console.WriteLine("stub pull");
+        return 0;
+    }
+}
+'@
+$stubCs = Join-Path $stubs 'DockerStub.cs'
+Set-Content $stubCs $stubSource -Encoding ASCII
+# Windows PowerShell 5.1 can compile a console exe; PowerShell 7 cannot.
+powershell.exe -NoProfile -Command "Add-Type -Path '$stubCs' -OutputAssembly '$rdBin\docker.exe' -OutputType ConsoleApplication"
+Check "stub docker.exe built in Rancher's bin folder" (Test-Path "$rdBin\docker.exe")
+
+$proj4 = Join-Path ([IO.Path]::GetTempPath()) ("dct-proj4-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $proj4 | Out-Null
+# PATH without the docker.cmd stub and without any real docker: only Rancher's folder has one.
+$noDockerPath = (($freshPath -split ';') | Where-Object { $_ -and $_ -ne $stubs -and -not (Test-Path (Join-Path $_ 'docker.exe')) }) -join ';'
+$env:Path = "$stubs\codeonly;$noDockerPath"
+New-Item -ItemType Directory -Path "$stubs\codeonly" -Force | Out-Null
+Copy-Item (Join-Path $stubs 'code.cmd') "$stubs\codeonly\code.cmd"
+$env:DCT_STUB_DOCKER = 'up'
+& "$bin\dct-init.cmd" -TargetDir $proj4
+Check "docker only in Rancher's bin folder (stale PATH): dct-init by full path exits 0" ($LASTEXITCODE -eq 0)
+Check "docker only in Rancher's bin folder: folder set up" (Test-Path (Join-Path $proj4 '.devcontainer\devcontainer.json'))
+$env:Path = $freshPath
+
 Write-Host ""
 if ($failures -gt 0) { Write-Host "RESULT: $failures check(s) failed"; exit 1 }
 Write-Host "RESULT: all checks passed"
