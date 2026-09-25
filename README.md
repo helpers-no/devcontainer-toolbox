@@ -12,19 +12,23 @@ Stop wasting time setting up development environments. DevContainer Toolbox give
 
 ## Quick Start
 
-**Prerequisites:** [Rancher Desktop](https://rancherdesktop.io/) (or [Docker Desktop](https://www.docker.com/products/docker-desktop)) must be installed and running.
+**Before you start:** [Rancher Desktop](https://rancherdesktop.io/) (started and ready) and [VS Code](https://code.visualstudio.com/). On a work PC, get both from Company Portal (Self Service on a Mac). See [Prerequisites](#prerequisites).
 
-**1. Install** (in your project folder):
+**1. Install** — open the folder for your project and run the command for your computer:
 
-```bash
-# Mac/Linux
-curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
+**Windows** — in PowerShell (*not* "Run as administrator"):
 
-# Windows PowerShell
+```powershell
 irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
 ```
 
-This creates a single `devcontainer.json` and pulls the pre-built container image.
+**Mac / Linux** — in Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
+```
+
+This creates a single `devcontainer.json`, installs the Dev Containers extension in VS Code, and downloads the pre-built container image. If Rancher Desktop isn't running, it tells you and changes nothing.
 
 **2. Open in VS Code** and click **"Reopen in Container"** when prompted.
 
@@ -68,9 +72,10 @@ This 30-second clip shows an AI adding a new development tool. [Learn how it wor
 
 ## Prerequisites
 
-- **Docker** - Install [Docker Desktop](https://www.docker.com/products/docker-desktop) or [Rancher Desktop](https://rancherdesktop.io/) (free, no license required)
-- **VS Code** with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-- **Windows users** - Install WSL first: `wsl --install` (run as Administrator, then restart)
+- **[Rancher Desktop](https://rancherdesktop.io/)** 1.24 or later, started and ready (free, no licence needed). [Docker Desktop](https://www.docker.com/products/docker-desktop) also works, but companies need a paid subscription for it.
+- **[VS Code](https://code.visualstudio.com/)**. The installer adds the Dev Containers extension for you.
+- **Windows:** Windows 11 (x64). Rancher Desktop needs WSL; on a work PC your IT department sets it up with Rancher Desktop. On your own PC, run `wsl --install --no-distribution` in PowerShell as Administrator, then restart.
+- **Mac:** macOS 13 (Ventura) or later, on Apple Silicon (M1 or later).
 
 New to containers? See [What Are DevContainers?](https://dct.sovereignsky.no/docs/what-are-devcontainers)
 

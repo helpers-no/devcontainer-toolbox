@@ -8,52 +8,70 @@ A ready-to-use development environment that works the same on Windows, Mac, and 
 
 ## Prerequisites
 
-### All Platforms
+You need two programs. **On a work computer, get them from Company Portal** (Windows) or **Self Service** (Mac), or ask your IT department.
 
-1. **Docker** - Install [Rancher Desktop](https://rancherdesktop.io/) (free and open source)
-   - *Why not Docker Desktop?* Docker Desktop requires a [paid subscription](https://www.docker.com/pricing/) for companies. Rancher Desktop is 100% free.
+1. **[Rancher Desktop](https://rancherdesktop.io/)** 1.24 or later (free and open source). It runs the container.
+   - **Start it before you install**, and wait until it says it is ready. The first start can take a few minutes. If it isn't running, the installer tells you and changes nothing.
+   - *Why not Docker Desktop?* It works too, but Docker Desktop requires a [paid subscription](https://www.docker.com/pricing/) for companies. Rancher Desktop is free.
 
-2. **VS Code** with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. **[VS Code](https://code.visualstudio.com/)**. You don't need to install any extension yourself: the installer adds the Dev Containers extension.
 
-### Windows Users
+### Windows
 
-Before installing Rancher Desktop, you need WSL (Windows Subsystem for Linux):
+- **Windows 11** (64-bit). Rancher Desktop no longer supports Windows 10.
+- Rancher Desktop needs **WSL** (Windows Subsystem for Linux).
+  - **On a work PC**, your IT department sets up WSL together with Rancher Desktop.
+  - **On your own PC**, install it once in PowerShell **as Administrator**, then restart:
 
-```powershell
-# Run in PowerShell as Administrator
-wsl --install
-```
+    ```powershell
+    wsl --install --no-distribution
+    ```
 
-Restart your computer after the command completes, then install Rancher Desktop.
+    `--no-distribution` matters: plain `wsl --install` also installs Ubuntu and asks you to create a Linux user, which DevContainer Toolbox does not need.
 
-**Note:** This works on Windows 10 (build 19041+) and Windows 11.
+### Mac
 
-### Mac/Linux Users
+- **macOS 13 (Ventura) or later**, on **Apple Silicon** (M1 or later).
+- No extra setup: just install Rancher Desktop.
 
-Just install Rancher Desktop - no additional setup needed.
+### Linux
+
+Install Rancher Desktop. No extra setup needed.
 
 ## Installation (3 Steps)
 
 ### Step 1: Install in Your Project
 
-Open a terminal in your project directory and run:
+Run the installer **in the folder for your project**. If you don't have one yet, create it first.
 
-**Mac/Linux:**
+**Windows** — open **PowerShell** from the Start menu. Use a normal PowerShell, **not "Run as administrator"**: an administrator window opens in `C:\Windows\System32`, and the installer would put its files there. Then run:
+
+```powershell
+mkdir $HOME\my-project; cd $HOME\my-project
+```
+
+```powershell
+irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
+```
+
+**Mac / Linux** — open **Terminal**, then:
+
+```bash
+mkdir -p ~/my-project && cd ~/my-project
+```
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
 ```
 
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
-```
+Replace `my-project` with a name of your choice. Skip the `mkdir` line if you already have a project folder, and run the install command in it.
 
 If you see "running scripts is disabled on this system":
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex"
 ```
 
-This creates a `.devcontainer/devcontainer.json` in your project and pulls the pre-built container image.
+This creates a `.devcontainer/devcontainer.json` in your project, installs the Dev Containers extension in VS Code, and downloads the pre-built container image. If Rancher Desktop isn't installed or isn't running, it tells you what to do and changes nothing.
 
 ### Step 2: Open in VS Code and Reopen in Container
 

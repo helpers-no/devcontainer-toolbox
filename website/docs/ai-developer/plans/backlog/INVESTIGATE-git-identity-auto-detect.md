@@ -122,3 +122,7 @@ The entrypoint code at lines 62-76 is already written and tested. We just need t
 - [ ] Test: host has no git config → graceful fallback to `vscode@localhost`
 - [ ] Consider moving `initializeCommand` to a script file (getting long)
 - [ ] Update startup message — remove "Git identity not configured" warning when identity is auto-detected
+
+## Finding from a real Windows PC (2026-09-25)
+
+DCT 1.8.3 on a managed Windows PC (urb-agents #1536): git identity came out as `vscode@localhost`, provider `local`. Nothing captures the host's git identity on Windows today. The February Windows-specific `initializeCommand` did (`git config --global user.name/email > .devcontainer.secrets\env-vars\.git-host-*`), but it was dropped with the shared template on 2026-02-17 (`d07e842`); the current command only captures the hostname, and only on Mac/Linux.
