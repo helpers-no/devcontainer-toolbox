@@ -135,7 +135,8 @@ On Terje's PC, in a project folder with a running devcontainer: `dct-find-contai
 
 - [x] 3.1 Quick Start and Getting Started: "next time, type `dct-init` in a new project folder".
   - Done 2026-09-25: a new Getting Started section "Setting Up Another Project: `dct-init`" (what it checks, where it lives, `-TargetDir`, exit codes for scripts); a "Next time" line in the Quick Start of `index.md` and `README.md`; the migration steps and the `dct-exec` section updated. Terje chose to merge the code and the docs together, so the site mentions `dct-init` at the same moment new installs get it.
-- [ ] 3.2 Tell client-provisioning (bus): `dct-init -TargetDir` is the call, and their `devcontainer-init` can go.
+- [x] 3.2 Tell client-provisioning (bus): `dct-init -TargetDir` is the call, and their `devcontainer-init` can go.
+  - Sent as urb-agents #1543 (2026-09-25), with the exit codes and the `ERRnnn` list. They accepted it. They retire `devcontainer-init` only after DCT's first pinned release, and then with Terje's go. Their question led to 1.9.1: `dct-init` now finds `docker` in Rancher Desktop's own folder when PATH is stale (PR #106).
 - [ ] 3.3 Test on Terje's PC: first install via the Quick Start, then `dct-init` in a second, new folder.
 - [x] 3.4 Release: bump `version.txt` (1.9.0, MINOR: a new feature).
 
