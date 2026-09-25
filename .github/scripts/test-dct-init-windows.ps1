@@ -70,6 +70,13 @@ cmd /c "dct-init -TargetDir `"$env:SystemRoot\System32`""
 Check "System32 refused: exit 3 through dct-init.cmd" ($LASTEXITCODE -eq 3)
 Check "System32 untouched" (-not (Test-Path "$env:SystemRoot\System32\.devcontainer"))
 
+# Terje's PC (urb-agents #1541): with Rancher stopped, a system folder must still be refused as a
+# folder problem (3), not reported as "Rancher not running" (1). The folder is checked first.
+$env:DCT_STUB_DOCKER = 'down'
+cmd /c "dct-init -TargetDir `"$env:SystemRoot\System32`""
+Check "System32 with Rancher stopped: still exit 3 (folder checked first)" ($LASTEXITCODE -eq 3)
+$env:DCT_STUB_DOCKER = 'up'
+
 Write-Host ""
 if ($failures -gt 0) { Write-Host "RESULT: $failures check(s) failed"; exit 1 }
 Write-Host "RESULT: all checks passed"

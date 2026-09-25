@@ -125,4 +125,9 @@ jobs:
           set -e
           test "$rc" = 3
           echo "system folder: exit 3"
+          set +e
+          DCT_STUB_DOCKER=down dct-init --target-dir /usr; rc=$?
+          set -e
+          test "$rc" = 3
+          echo "system folder with Rancher stopped: still exit 3 (folder checked first)"
 

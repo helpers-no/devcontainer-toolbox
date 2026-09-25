@@ -62,7 +62,43 @@ if ($isAdmin) {
     Write-Host "a normal PowerShell window is enough."
 }
 
-# --- 1. Prerequisites (nothing is written before these pass) -----------------------
+# --- 1. Target folder (checked first: it is about the command the user just typed) ---
+
+if (-not (Test-Path -LiteralPath $TargetDir -PathType Container)) {
+    Exit-DctInit 3 "ERR010" @("The folder does not exist: $TargetDir")
+}
+$target = (Resolve-Path -LiteralPath $TargetDir).ProviderPath.TrimEnd('\')
+
+$mkdirHint = @(
+    "",
+    "Create a folder for your project and run this command in it, for example:",
+    "    mkdir `$HOME\my-project; cd `$HOME\my-project; dct-init")
+
+$systemFolders = @($env:SystemRoot, $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData) |
+    Where-Object { $_ } | ForEach-Object { $_.TrimEnd('\') }
+foreach ($sys in $systemFolders) {
+    if ($target -eq $sys -or $target.StartsWith("$sys\", [StringComparison]::OrdinalIgnoreCase)) {
+        Exit-DctInit 3 "ERR011" (@("This is a Windows system folder, not a project folder: $target") + $mkdirHint)
+    }
+}
+if ($target -eq ([IO.Path]::GetPathRoot("$target\")).TrimEnd('\')) {
+    Exit-DctInit 3 "ERR011" (@("This is the root of a drive, not a project folder: $target") + $mkdirHint)
+}
+if ($target -eq $HOME.TrimEnd('\')) {
+    Exit-DctInit 3 "ERR011" (@("This is your home folder, not a project folder.") + $mkdirHint)
+}
+
+Set-Location -LiteralPath $target
+
+if (Test-Path ".devcontainer.backup") {
+    Exit-DctInit 3 "ERR012" @(
+        "A previous backup (.devcontainer.backup\) already exists in this folder.",
+        "",
+        "Remove or rename it first, so it is not overwritten, e.g.:",
+        "    Rename-Item .devcontainer.backup .devcontainer.backup.old")
+}
+
+# --- 2. Prerequisites (nothing is written before these pass) -----------------------
 
 $rancherExe = @(
     "$env:LOCALAPPDATA\Programs\Rancher Desktop\Rancher Desktop.exe",
@@ -111,42 +147,6 @@ if (-not $codeCmd) {
         "VS Code was not found on this PC.",
         "",
         "Install VS Code (on a work PC: from Company Portal), then run this command again.")
-}
-
-# --- 2. Target folder -----------------------------------------------------------------
-
-if (-not (Test-Path -LiteralPath $TargetDir -PathType Container)) {
-    Exit-DctInit 3 "ERR010" @("The folder does not exist: $TargetDir")
-}
-$target = (Resolve-Path -LiteralPath $TargetDir).ProviderPath.TrimEnd('\')
-
-$mkdirHint = @(
-    "",
-    "Create a folder for your project and run this command in it, for example:",
-    "    mkdir `$HOME\my-project; cd `$HOME\my-project; dct-init")
-
-$systemFolders = @($env:SystemRoot, $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData) |
-    Where-Object { $_ } | ForEach-Object { $_.TrimEnd('\') }
-foreach ($sys in $systemFolders) {
-    if ($target -eq $sys -or $target.StartsWith("$sys\", [StringComparison]::OrdinalIgnoreCase)) {
-        Exit-DctInit 3 "ERR011" (@("This is a Windows system folder, not a project folder: $target") + $mkdirHint)
-    }
-}
-if ($target -eq ([IO.Path]::GetPathRoot("$target\")).TrimEnd('\')) {
-    Exit-DctInit 3 "ERR011" (@("This is the root of a drive, not a project folder: $target") + $mkdirHint)
-}
-if ($target -eq $HOME.TrimEnd('\')) {
-    Exit-DctInit 3 "ERR011" (@("This is your home folder, not a project folder.") + $mkdirHint)
-}
-
-Set-Location -LiteralPath $target
-
-if (Test-Path ".devcontainer.backup") {
-    Exit-DctInit 3 "ERR012" @(
-        "A previous backup (.devcontainer.backup\) already exists in this folder.",
-        "",
-        "Remove or rename it first, so it is not overwritten, e.g.:",
-        "    Rename-Item .devcontainer.backup .devcontainer.backup.old")
 }
 
 # --- 3. devcontainer.json -------------------------------------------------------------

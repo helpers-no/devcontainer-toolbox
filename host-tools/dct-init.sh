@@ -60,7 +60,39 @@ done
 
 echo "Setting up DevContainer Toolbox in: $TARGET_DIR"
 
-# ─── 1. Prerequisites (nothing is written before these pass) ─────────────────
+# ─── 1. Target folder (checked first: it is about the command just typed) ────
+
+if [ ! -d "$TARGET_DIR" ]; then
+    fail 3 ERR010 "The folder does not exist: $TARGET_DIR"
+fi
+TARGET_DIR="$(cd "$TARGET_DIR" && pwd -P)"
+HOME_REAL="$(cd "$HOME" 2>/dev/null && pwd -P || echo "$HOME")"
+
+case "$TARGET_DIR" in
+    /|/System|/System/*|/usr|/usr/*|/bin|/bin/*|/sbin|/sbin/*|/etc|/etc/*|/private/etc|/private/etc/*|/Library|/Library/*|/Applications|/Applications/*)
+        fail 3 ERR011 "This is a system folder, not a project folder: $TARGET_DIR" \
+            "" \
+            "Create a folder for your project and run this command in it, for example:" \
+            "    mkdir -p ~/my-project && cd ~/my-project && dct-init"
+        ;;
+esac
+if [ "$TARGET_DIR" = "$HOME_REAL" ]; then
+    fail 3 ERR011 "This is your home folder, not a project folder." \
+        "" \
+        "Create a folder for your project and run this command in it, for example:" \
+        "    mkdir -p ~/my-project && cd ~/my-project && dct-init"
+fi
+
+cd "$TARGET_DIR" || fail 3 ERR010 "Cannot open the folder: $TARGET_DIR"
+
+if [ -d ".devcontainer.backup" ]; then
+    fail 3 ERR012 "A previous backup (.devcontainer.backup/) already exists in this folder." \
+        "" \
+        "Remove or rename it first, so it is not overwritten, e.g.:" \
+        "    mv .devcontainer.backup .devcontainer.backup.old"
+fi
+
+# ─── 2. Prerequisites (nothing is written before these pass) ─────────────────
 
 if [ "$(uname -s 2>/dev/null)" = "Darwin" ] && [ "$(uname -m 2>/dev/null)" != "arm64" ]; then
     fail 1 ERR005 "This Mac has an Intel processor. DevContainer Toolbox supports Macs with Apple Silicon (M1 or later)."
@@ -106,38 +138,6 @@ if [ -z "$CODE_CMD" ]; then
     fail 1 ERR004 "VS Code was not found." \
         "" \
         "Install VS Code (on a work Mac: from Self Service), then run this command again."
-fi
-
-# ─── 2. Target folder ────────────────────────────────────────────────────────
-
-if [ ! -d "$TARGET_DIR" ]; then
-    fail 3 ERR010 "The folder does not exist: $TARGET_DIR"
-fi
-TARGET_DIR="$(cd "$TARGET_DIR" && pwd -P)"
-HOME_REAL="$(cd "$HOME" 2>/dev/null && pwd -P || echo "$HOME")"
-
-case "$TARGET_DIR" in
-    /|/System|/System/*|/usr|/usr/*|/bin|/bin/*|/sbin|/sbin/*|/etc|/etc/*|/private/etc|/private/etc/*|/Library|/Library/*|/Applications|/Applications/*)
-        fail 3 ERR011 "This is a system folder, not a project folder: $TARGET_DIR" \
-            "" \
-            "Create a folder for your project and run this command in it, for example:" \
-            "    mkdir -p ~/my-project && cd ~/my-project && dct-init"
-        ;;
-esac
-if [ "$TARGET_DIR" = "$HOME_REAL" ]; then
-    fail 3 ERR011 "This is your home folder, not a project folder." \
-        "" \
-        "Create a folder for your project and run this command in it, for example:" \
-        "    mkdir -p ~/my-project && cd ~/my-project && dct-init"
-fi
-
-cd "$TARGET_DIR" || fail 3 ERR010 "Cannot open the folder: $TARGET_DIR"
-
-if [ -d ".devcontainer.backup" ]; then
-    fail 3 ERR012 "A previous backup (.devcontainer.backup/) already exists in this folder." \
-        "" \
-        "Remove or rename it first, so it is not overwritten, e.g.:" \
-        "    mv .devcontainer.backup .devcontainer.backup.old"
 fi
 
 # ─── 3. devcontainer.json ────────────────────────────────────────────────────

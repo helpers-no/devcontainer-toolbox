@@ -59,13 +59,15 @@ client-provisioning's `devcontainer-init` also does less than DCT's installer: i
 
 ---
 
-## Phase 1: Check execution policy on a managed PC — WAITING (Terje, urb-agents #1539)
+## Phase 1: Check execution policy on a managed PC — ✅ DONE
 
 ### Tasks
 
-- [ ] 1.1 On Terje's managed PC, record `Get-ExecutionPolicy -List`.
-- [ ] 1.2 Create a one-line test `.ps1` plus `.cmd` shim in the user's profile, the same way `dct-init` would be installed, and check it runs from a new PowerShell window by typing its name.
-- [ ] 1.3 Decide with Terje: go ahead unsigned, sign it, or change the design.
+- [x] 1.1 On Terje's managed PC, record `Get-ExecutionPolicy -List`.
+- [x] 1.2 Create a one-line test `.ps1` plus `.cmd` shim in the user's profile, the same way `dct-init` would be installed, and check it runs from a new PowerShell window by typing its name.
+- [x] 1.3 Decide with Terje: go ahead unsigned, sign it, or change the design.
+
+**Result (Terje's managed PC, urb-agents #1541, 2026-09-25):** the real `dct-init` install from the branch ran **without `ERR006`**, so neither `MachinePolicy` nor `UserPolicy` enforces `AllSigned` or `Restricted`. `dct-init.cmd` then ran `dct-init.ps1` from `%LOCALAPPDATA%` **by name in a new window**. Decision: go ahead unsigned. (#1539's dummy-script test was superseded by this real one; the `Get-ExecutionPolicy -List` table itself was not pasted.)
 
 ### Validation
 
@@ -102,7 +104,8 @@ A written result in this plan: the policy values and whether the shim ran.
   - bash, via `install.sh` with a throwaway HOME and stub `docker`/`code`: every case returns the contract's exit code (not running 1, pull fails 2, system folder / missing folder / home / backup exists 3, success 0), and `install.sh` passes it on; `dct-init` works by name in a new folder.
   - PowerShell 7 on Linux, `install.ps1` run via `Invoke-Expression` like the Quick Start: not running / success / rerun-with-backup / backup-exists (3), with the session kept alive and `$ErrorActionPreference` untouched.
   - Lint: shellcheck, PSScriptAnalyzer (0 findings apart from `PSAvoidUsingWriteHost`), actionlint; `.ps1` files are plain ASCII (Windows PowerShell 5.1 reads BOM-less files as ANSI).
-- **Not verified yet:** Windows itself. The new `Host Commands` jobs (`dct-init-windows`, `dct-init-linux`) run on the PR; Terje's PC after that.
+- **Verified on Windows:** the `Host Commands` jobs on PR #105 (9/9 checks on `windows-latest`, Linux green), then **Terje's managed PC** (urb-agents #1541): the first install, `dct-init` by name in a new window (exit 0), and Rancher stopped (`ERR003`, exit 1, nothing written).
+- **Fixed after the PC test:** `dct-init -TargetDir C:\Windows\System32` with Rancher stopped reported `ERR003` (1) instead of `ERR011` (3), because prerequisites were checked before the folder, which cost the user two round trips. The **folder is now checked first** (both scripts), with a regression check in both CI jobs.
 
 ### Validation
 
