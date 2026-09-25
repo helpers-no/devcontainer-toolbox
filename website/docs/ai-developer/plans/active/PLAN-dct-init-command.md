@@ -75,7 +75,7 @@ A written result in this plan: the policy values and whether the shim ran.
 
 ---
 
-## Phase 2: `dct-init` for Windows and Mac/Linux — IN PROGRESS
+## Phase 2: `dct-init` for Windows and Mac/Linux — ✅ DONE
 
 ### Tasks
 
@@ -129,14 +129,15 @@ On Terje's PC, in a project folder with a running devcontainer: `dct-find-contai
 
 ---
 
-## Phase 3: Docs, client-provisioning, release
+## Phase 3: Docs, client-provisioning, release — IN PROGRESS
 
 ### Tasks
 
-- [ ] 3.1 Quick Start and Getting Started: "next time, type `dct-init` in a new project folder".
+- [x] 3.1 Quick Start and Getting Started: "next time, type `dct-init` in a new project folder".
+  - Done 2026-09-25: a new Getting Started section "Setting Up Another Project: `dct-init`" (what it checks, where it lives, `-TargetDir`, exit codes for scripts); a "Next time" line in the Quick Start of `index.md` and `README.md`; the migration steps and the `dct-exec` section updated. Terje chose to merge the code and the docs together, so the site mentions `dct-init` at the same moment new installs get it.
 - [ ] 3.2 Tell client-provisioning (bus): `dct-init -TargetDir` is the call, and their `devcontainer-init` can go.
 - [ ] 3.3 Test on Terje's PC: first install via the Quick Start, then `dct-init` in a second, new folder.
-- [ ] 3.4 Release: bump `version.txt`.
+- [x] 3.4 Release: bump `version.txt` (1.9.0, MINOR: a new feature).
 
 ### Validation
 

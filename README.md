@@ -28,7 +28,9 @@ irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/insta
 curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
 ```
 
-This creates a single `devcontainer.json`, installs the Dev Containers extension in VS Code, and downloads the pre-built container image. If Rancher Desktop isn't running, it tells you and changes nothing.
+This installs the `dct-init` command, then uses it to create a single `devcontainer.json`, install the Dev Containers extension in VS Code, and download the pre-built container image. If Rancher Desktop isn't running, it tells you and changes nothing.
+
+**Next time:** in a new project folder, just type `dct-init`. The installer adds that command for you.
 
 **2. Open in VS Code** and click **"Reopen in Container"** when prompted.
 
