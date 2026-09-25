@@ -14,6 +14,8 @@ in progress.
 
 | Item | What it does | Priority |
 |---|---|---|
+| [PLAN-fix-windows-quickstart](PLAN-fix-windows-quickstart.md) | Make the Windows Quick Start work: cross-shell `initializeCommand`, safe `install.ps1`, split docs block | High |
+| [PLAN-finish-move-to-helpers-no](PLAN-finish-move-to-helpers-no.md) | Leftovers of the terchris → helpers-no move: fork network reversed, old image deleted (phases 1–2 done) | — |
 | [INVESTIGATE-outdated-software-versions](INVESTIGATE-outdated-software-versions.md) | Decide how the base image pins or tracks Node and other bundled software versions | — |
 | [INVESTIGATE-image-retention](INVESTIGATE-image-retention.md) | Retention policy for the image tags every release pushes to ghcr.io | — |
 | [PLAN-windows-testing](PLAN-windows-testing.md) | Validate DCT on Windows; it has only been tested on macOS | — |
@@ -28,4 +30,4 @@ in progress.
 | [INVESTIGATE-advanced-templates](INVESTIGATE-advanced-templates.md) | Templates with backend dependencies (for example a CMS plus PostgreSQL) | — |
 | [INVESTIGATE-analytics-setup](INVESTIGATE-analytics-setup.md) | Umami analytics for the documentation site; definition incomplete | — |
 
-Priority is unset: no ranking of the backlog has been agreed yet.
+Priority is unset except where marked: no ranking of the rest of the backlog has been agreed yet.

@@ -8,7 +8,7 @@ sidebar_position: 1
 
 # 1PRIORITY — what this agent does next
 
-**Last updated: 2026-09-24** · agent `devcontainer-toolbox` · state **idle**
+**Last updated: 2026-09-25** · agent `devcontainer-toolbox` · state **idle**
 
 A triage view, ordered by *what each item unblocks* — not a roadmap and not a plan.
 [`index.md`](index.md) says what every backlog item **is**; this file says what to **do next**
@@ -23,14 +23,16 @@ Fleet work is on the bus in `terchris/urb-agents` —
 
 | # | What | Why this one |
 |---|---|---|
-| **1** | [PLAN-p1-dct-shim](../active/PLAN-p1-dct-shim.md) phase 3: end-to-end test of the `uis` shim with `python-basic-webserver-database` | The shim is shipped but has never been confirmed end to end. First check the prerequisite: the template README no longer mentions `docker exec`, but it also has no `uis connect` / `uis status` sections for tasks 3.2–3.3 to test. |
-| **2** | Close out [PLAN-dct-exec-host-helper](../active/PLAN-dct-exec-host-helper.md): run the unverified checks, then move it to `completed/` | Shipped in 1.8.0; only its bookkeeping is open. |
+| **1** | [PLAN-fix-windows-quickstart](PLAN-fix-windows-quickstart.md) phases 1–2: cross-shell `initializeCommand`, safe `install.ps1`, Windows CI job | Every new Windows install fails to start the container today (reported 2026-09-24). |
+| **2** | [PLAN-p1-dct-shim](../active/PLAN-p1-dct-shim.md) phase 3: end-to-end test of the `uis` shim with `python-basic-webserver-database` | The shim is shipped but has never been confirmed end to end. First check the prerequisite: the template README no longer mentions `docker exec`, but it also has no `uis connect` / `uis status` sections for tasks 3.2–3.3 to test. |
+| **3** | Close out [PLAN-dct-exec-host-helper](../active/PLAN-dct-exec-host-helper.md): run the unverified checks, then move it to `completed/` | Shipped in 1.8.0; only its bookkeeping is open. |
 
 ## Waiting on someone — ordered by what it unblocks
 
 | What | Who | Since | Unblocks | Raised |
 |---|---|---|---|---|
 | Whether to open follow-up issue 5.3 in `helpers-no/sovdev-logger` | Terje | 2026-09-24 | Closing PLAN-dct-exec-host-helper | This session |
+| A Windows machine for the real-install test (task 3.2) | Terje | 2026-09-25 | Releasing PLAN-fix-windows-quickstart | [the plan](PLAN-fix-windows-quickstart.md) |
 
 ## If Terje wants work started, these rank highest
 
