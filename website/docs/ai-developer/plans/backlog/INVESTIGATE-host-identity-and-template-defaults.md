@@ -411,3 +411,7 @@ After this output, the user has to either:
 2. **Run `dev-setup` and manually re-enter** the email and name they already have on their host.
 
 Neither is acceptable as a long-term experience for new users.
+
+## Finding from a real Windows PC (2026-09-25)
+
+DCT 1.8.3 on a managed Windows PC (urb-agents #1536): the startup's host-info refresh showed `OS: unknown`, `User: unknown`, `Hostname: devcontainer` (the fallback). `remoteEnv` passes `${localEnv:COMPUTERNAME}` as `DEV_HOST_COMPUTERNAME`, but it was evidently not visible at that stage (possibly the ENTRYPOINT stage, which runs before `remoteEnv` applies; not verified). The same output's Docker Engine block showed the PC's real name (`docker info` Name), which could serve as a Windows fallback. Since 1.8.2, `initializeCommand` deliberately writes no `.host-hostname` on Windows.

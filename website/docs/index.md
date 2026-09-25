@@ -11,17 +11,23 @@ Stop wasting time setting up development environments. DevContainer Toolbox give
 
 ## Quick Start
 
-**1. Install** (in your project folder):
+**Before you start:** [Rancher Desktop](https://rancherdesktop.io/) (started and ready) and [VS Code](https://code.visualstudio.com/). On a work PC, get both from Company Portal (Self Service on a Mac). Windows 11, or macOS 13 or later on Apple Silicon. [Details](getting-started)
 
-```bash
-# Mac/Linux
-curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
+**1. Install** — open the folder for your project and run the command for your computer:
 
-# Windows PowerShell
+**Windows** — in PowerShell (*not* "Run as administrator"):
+
+```powershell
 irm https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.ps1 | iex
 ```
 
-This creates a `.devcontainer/devcontainer.json` and pulls the pre-built image.
+**Mac / Linux** — in Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helpers-no/devcontainer-toolbox/main/install.sh | bash
+```
+
+This creates `.devcontainer/devcontainer.json`, installs the Dev Containers extension in VS Code, and downloads the container image. If Rancher Desktop isn't running, it tells you and changes nothing.
 
 **2. Open in VS Code** and click **"Reopen in Container"** when prompted.
 
